@@ -1,0 +1,11 @@
+name: maxminddb
+version: 0.4.1
+
+dependencies:
+  ipaddress:
+    github: sija/ipaddress.cr
+
+authors:
+  - delef <delef@ya.ru>
+
+  license: MIT
