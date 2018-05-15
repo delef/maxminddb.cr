@@ -45,7 +45,7 @@ result["registered_country"]["names"]["en"].as_s # => "Australia"
 
 ## Contributing
 
-1. Fork it ( https://github.com/delef/geoip2.cr/fork )
+1. Fork it ( https://github.com/delef/maxminddb.cr/fork )
 2. Create your feature branch (git checkout -b my-new-feature)
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)
