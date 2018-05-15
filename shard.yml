@@ -1,5 +1,6 @@
 name: maxminddb
 version: 0.4.1
+license: MIT
 
 dependencies:
   ipaddress:
@@ -7,5 +8,3 @@ dependencies:
 
 authors:
   - delef <delef@ya.ru>
-
-  license: MIT
