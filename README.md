@@ -17,7 +17,7 @@ dependencies:
 ```crystal
 require "maxminddb"
 
-mmdb = MaxMindDB.new("#{__DIR__}/../data/GeoLite2-Country.mmdb")
+mmdb = MaxMindDB.new("#{__DIR__}/../data/GeoLite2-City.mmdb")
 result = mmdb.lookup("1.1.1.1")
 
 result["city"]["geoname_id"].as_i # => 2151718
