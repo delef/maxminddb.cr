@@ -19,7 +19,7 @@ describe MaxMindDB::GeoIP2 do
       city_db.lookup(ip).city.name("en").should eq("Alameda")
     end
 
-    it "returns -122.0574 as the longitude" do
+    it "returns -122.2788 as the longitude" do
       city_db.lookup(ip).location.longitude.should eq(-122.2788)
     end
 

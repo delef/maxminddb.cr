@@ -19,7 +19,7 @@ describe MaxMindDB do
       city_db.lookup(ip)["city"]["names"]["en"].as_s.should eq("Alameda")
     end
 
-    it "returns -122.0574 as the longitude" do
+    it "returns -122.2788 as the longitude" do
       city_db.lookup(ip)["location"]["longitude"].as_f.should eq(-122.2788)
     end
 
