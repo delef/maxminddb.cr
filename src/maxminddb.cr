@@ -74,6 +74,3 @@ module MaxMindDB
     Database.new(db_path)
   end
 end
-
-mmdb = MaxMindDB::GeoIP2.new("#{__DIR__}/../spec/cache/GeoLite2-City.mmdb")
-pp typeof(mmdb.lookup("74.125.225.224"))
