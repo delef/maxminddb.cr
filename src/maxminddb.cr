@@ -5,6 +5,7 @@ require "./maxminddb/consts"
 require "./maxminddb/types"
 require "./maxminddb/any"
 require "./maxminddb/decoder"
+require "./maxminddb/format/*"
 
 module MaxMindDB
   class Database
@@ -46,7 +47,7 @@ module MaxMindDB
         else
           base = @decoder.search_tree_size + DATA_SEPARATOR_SIZE
           position = (next_node - @decoder.node_count) - DATA_SEPARATOR_SIZE
-    
+          
           return @decoder.build(position, base).to_any
         end
       end
@@ -63,7 +64,16 @@ module MaxMindDB
     end
   end
 
+  class GeoIP2 < Database
+    def lookup(addr : UInt32|UInt128|BigInt)
+      Format::GeoIP2.new(super(addr))
+    end
+  end
+
   def self.new(db_path : String)
     Database.new(db_path)
   end
 end
+
+mmdb = MaxMindDB::GeoIP2.new("#{__DIR__}/../spec/cache/GeoLite2-City.mmdb")
+pp typeof(mmdb.lookup("74.125.225.224"))

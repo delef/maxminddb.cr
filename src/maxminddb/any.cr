@@ -54,6 +54,21 @@ module MaxMindDB
       end
     end
 
+    def each : Nil
+      case object = @raw
+      when Array
+        object.each do |v|
+          yield(v)
+        end
+      when Hash
+        object.each do |k, v|
+          yield({k, v})
+        end
+      else
+        raise "Expected Array or Hash for #each, not #{object.class}"
+      end
+    end
+
     def as_nil : Nil
       @raw.as(Nil)
     end
@@ -146,16 +161,16 @@ module MaxMindDB
       as_h if @raw.is_a?(Hash)
     end
 
-    def inspect(io)
-      @raw.inspect(io)
-    end
-
     def found?
       size > 0
     end
 
     def empty?
       !found?
+    end
+
+    def inspect(io)
+      @raw.inspect(io)
     end
   end
 end

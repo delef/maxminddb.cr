@@ -1,14 +1,14 @@
 require "./spec_helper"
 
-describe MaxMindDB do
-  city_db = MaxMindDB.new("spec/cache/GeoLite2-City.mmdb")
-  country_db = MaxMindDB.new("spec/cache/GeoLite2-Country.mmdb")
+describe MaxMindDB::GeoIP2 do
+  city_db = MaxMindDB::GeoIP2.new("spec/cache/GeoLite2-City.mmdb")
+  country_db = MaxMindDB::GeoIP2.new("spec/cache/GeoLite2-Country.mmdb")
 
   context "for the ip 77.88.55.88 (IPv4)" do
     ip = "74.125.225.224"
 
-    it "returns a MaxMindDB::Any" do
-      city_db.lookup(ip).should be_a(MaxMindDB::Any)
+    it "returns a MaxMindDB::Format::GeoIP2::Root" do
+      city_db.lookup(ip).should be_a(MaxMindDB::Format::GeoIP2::Root)
     end
 
     it "found?" do
@@ -16,19 +16,19 @@ describe MaxMindDB do
     end
 
     it "returns Alameda as the English name" do
-      city_db.lookup(ip)["city"]["names"]["en"].as_s.should eq("Alameda")
+      city_db.lookup(ip).city.name("en").should eq("Alameda")
     end
 
     it "returns -122.0574 as the longitude" do
-      city_db.lookup(ip)["location"]["longitude"].as_f.should eq(-122.2788)
+      city_db.lookup(ip).location.longitude.should eq(-122.2788)
     end
 
     it "returns United States as the English country name" do
-      country_db.lookup(ip)["country"]["names"]["en"].as_s.should eq("United States")
+      country_db.lookup(ip).country.name("en").should eq("United States")
     end
 
     it "returns US as the country iso code" do
-      country_db.lookup(ip)["country"]["iso_code"].as_s.should eq("US")
+      country_db.lookup(ip).country.iso_code.should eq("US")
     end
 
     context "as a Integer" do
@@ -38,16 +38,16 @@ describe MaxMindDB do
         city_db.lookup(integer_ip).found?.should be_true
       end
 
-      it "returns a MaxMindDB::Result" do
-        city_db.lookup(integer_ip).should be_a(MaxMindDB::Any)
+      it "returns a MaxMindDB::Format::GeoIP2::Root" do
+        city_db.lookup(integer_ip).should be_a(MaxMindDB::Format::GeoIP2::Root)
       end
 
       it "returns Alameda as the English name" do
-        city_db.lookup(integer_ip)["city"]["names"]["en"].as_s.should eq("Alameda")
+        city_db.lookup(integer_ip).city.name("en").should eq("Alameda")
       end
 
       it "returns United States as the English country name" do
-        country_db.lookup(integer_ip)["country"]["names"]["en"].as_s.should eq("United States")
+        country_db.lookup(integer_ip).country.name("en").should eq("United States")
       end
     end
   end
@@ -60,14 +60,14 @@ describe MaxMindDB do
     end
 
     it "returns FI as the country iso code" do
-      country_db.lookup(ip)["country"]["iso_code"].as_s.should eq("FI")
+      country_db.lookup(ip).country.iso_code.should eq("FI")
     end
 
     context "as an integer" do
       integer_ip = IPAddress.new(ip).as(IPAddress::IPv6).to_u128
 
       it "returns FI as the country iso code" do
-        country_db.lookup(ip)["country"]["iso_code"].as_s.should eq("FI")
+        country_db.lookup(ip).country.iso_code.should eq("FI")
       end
     end
   end
@@ -75,8 +75,8 @@ describe MaxMindDB do
   context "for the ip 127.0.0.1 (local ip)" do
     ip = "127.0.0.1"
 
-    it "returns a MaxMindDB::Any" do
-      city_db.lookup(ip).should be_a(MaxMindDB::Any)
+    it "returns a MaxMindDB::Format::GeoIP2::Root" do
+      city_db.lookup(ip).should be_a(MaxMindDB::Format::GeoIP2::Root)
     end
 
     it "found?" do
@@ -94,12 +94,12 @@ describe MaxMindDB do
       {"179.175.47.87", "BR"},
       {"202.67.40.50", "ID"},
     ].each do |ip, iso|
-      it "returns a MaxMindDB::Any" do
-        city_db.lookup(ip).should be_a(MaxMindDB::Any)
+      it "returns a MaxMindDB::Format::GeoIP2::Root" do
+        city_db.lookup(ip).should be_a(MaxMindDB::Format::GeoIP2::Root)
       end
 
       it "returns #{iso} as the country iso code" do
-        country_db.lookup(ip)["country"]["iso_code"].as_s.should eq(iso)
+        country_db.lookup(ip).country.iso_code.should eq(iso)
       end
     end
   end
