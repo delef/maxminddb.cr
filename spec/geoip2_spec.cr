@@ -15,12 +15,20 @@ describe MaxMindDB::GeoIP2 do
       city_db.lookup(ip).found?.should be_true
     end
 
+    it "returns Array of Hash(String, String) of city names" do
+      city_db.lookup(ip).city.names.should be_a(Array(Hash(String, String)))
+    end
+
     it "returns Alameda as the English name" do
       city_db.lookup(ip).city.name("en").should eq("Alameda")
     end
 
     it "returns -122.2788 as the longitude" do
       city_db.lookup(ip).location.longitude.should eq(-122.2788)
+    end
+
+    it "returns Array of Hash(String, String) of country names" do
+      country_db.lookup(ip).country.names.should be_a(Array(Hash(String, String)))
     end
 
     it "returns United States as the English country name" do
@@ -32,22 +40,30 @@ describe MaxMindDB::GeoIP2 do
     end
 
     context "as a Integer" do
-      integer_ip = IPAddress.new(ip).as(IPAddress::IPv4).to_u32
-
-      it "found?" do
-        city_db.lookup(integer_ip).found?.should be_true
-      end
+      ip = IPAddress.new(ip).as(IPAddress::IPv4).to_u32
 
       it "returns a MaxMindDB::Format::GeoIP2::Root" do
-        city_db.lookup(integer_ip).should be_a(MaxMindDB::Format::GeoIP2::Root)
+        city_db.lookup(ip).should be_a(MaxMindDB::Format::GeoIP2::Root)
+      end
+
+      it "found?" do
+        city_db.lookup(ip).found?.should be_true
+      end
+
+      it "returns Array of Hash(String, String) of city names" do
+        city_db.lookup(ip).city.names.should be_a(Array(Hash(String, String)))
       end
 
       it "returns Alameda as the English name" do
-        city_db.lookup(integer_ip).city.name("en").should eq("Alameda")
+        city_db.lookup(ip).city.name("en").should eq("Alameda")
+      end
+
+      it "returns Array of Hash(String, String) of country names" do
+        country_db.lookup(ip).country.names.should be_a(Array(Hash(String, String)))
       end
 
       it "returns United States as the English country name" do
-        country_db.lookup(integer_ip).country.name("en").should eq("United States")
+        country_db.lookup(ip).country.name("en").should eq("United States")
       end
     end
   end
@@ -64,7 +80,7 @@ describe MaxMindDB::GeoIP2 do
     end
 
     context "as an integer" do
-      integer_ip = IPAddress.new(ip).as(IPAddress::IPv6).to_u128
+      ip = IPAddress.new(ip).as(IPAddress::IPv6).to_u128
 
       it "returns FI as the country iso code" do
         country_db.lookup(ip).country.iso_code.should eq("FI")

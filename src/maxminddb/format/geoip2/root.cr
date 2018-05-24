@@ -12,7 +12,7 @@ module MaxMindDB::Format::GeoIP2
       @country = Entity::Country.new(@data["country"]?)
       @location = Entity::Location.new(@data["location"]?)
       @postal = Entity::Postal.new(@data["postal"]?)
-      @registered_country = Entity::RegisteredCountry.new(@data["registered_country"]?)
+      @registered_country = Entity::RegisteredCountry.new(@data["registered_countrys"]?)
       @subdivisions = [] of Entity::Subdivisions
 
       if @data["subdivisions"]?

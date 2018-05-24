@@ -17,8 +17,9 @@ module MaxMindDB
     def []?(key : String) : Any?
       case data = @raw
       when Hash
-        value = data[key]?
-        value.nil? ? nil : Any.new(value)
+        if value = data[key]?
+          Any.new(value)
+        end
       else
         raise "Expected Hash for #[](key : String), not #{data.class}"
       end

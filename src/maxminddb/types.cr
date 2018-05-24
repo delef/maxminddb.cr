@@ -21,12 +21,7 @@ module MaxMindDB
     Float,
   end
 
-  struct Node
-    getter position, value, data
-    
-    def initialize(@position : Int32, @value : MapValue)
-    end
-
+  record Node, position : Int32, value : MapValue do
     def to_any
       Any.new(@value)
     end

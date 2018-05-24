@@ -5,18 +5,13 @@ require "./maxminddb/consts"
 require "./maxminddb/types"
 require "./maxminddb/any"
 require "./maxminddb/decoder"
+require "./maxminddb/reader"
 require "./maxminddb/format/*"
 
 module MaxMindDB
   class Database
     def initialize(@db_path : String)
-      raise ArgumentError.new("Database not found") unless File.exists?(db_path)
-
-      size = File.size(@db_path)
-      @buffer = Bytes.new(size)
-      File.open(@db_path, "rb") { |file| file.read_fully(@buffer) }
-
-      @decoder = Decoder.new(@buffer)
+      @reader = Reader.new(@db_path)
     end
 
     def lookup(addr : String)
@@ -30,33 +25,15 @@ module MaxMindDB
           raise ArgumentError.new("Invalid IP address")
         end
 
-      lookup(decimal)
+      @reader.lookup(decimal)
     end
 
     def lookup(addr : UInt32|UInt128|BigInt)
-      node = 0
-
-      (@decoder.start_index...128).each do |i|
-        flag = (addr >> (127 - i)) & 1
-        next_node = @decoder.read(node, flag)
-
-        raise ArgumentError.new("Invalid file format") if next_node.zero?
-
-        if next_node < @decoder.node_count
-          node = next_node
-        else
-          base = @decoder.search_tree_size + DATA_SEPARATOR_SIZE
-          position = (next_node - @decoder.node_count) - DATA_SEPARATOR_SIZE
-          
-          return @decoder.build(position, base).to_any
-        end
-      end
-
-      raise ArgumentError.new("Invalid file format")
+      @reader.lookup(addr)
     end
 
     def metadata
-      @decoder.metadata
+      @reader.metadata
     end
 
     def inspect(io : IO)
@@ -65,6 +42,10 @@ module MaxMindDB
   end
 
   class GeoIP2 < Database
+    def lookup(addr : String)
+      Format::GeoIP2.new(super(addr))
+    end
+
     def lookup(addr : UInt32|UInt128|BigInt)
       Format::GeoIP2.new(super(addr))
     end
