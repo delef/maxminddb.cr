@@ -14,7 +14,7 @@ dependencies:
 
 ## Usage
 
-### if you work with GeoIP2
+### GeoIP2
 ```crystal
 require "maxminddb"
 
@@ -68,7 +68,7 @@ result.subdivisions[0].names # => [{"en" => "Victoria"},
                                    {"ru" => "Виктория"}]
 ```
 
-### if you work with any other MaxMind Database
+### any other MaxMind Database
 
 ```crystal
 require "maxminddb"
