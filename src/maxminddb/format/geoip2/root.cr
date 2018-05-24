@@ -4,6 +4,8 @@ require "./entity/*"
 
 module MaxMindDB::Format::GeoIP2
   class Root
+    @connection_type : String?
+
     getter data, city, continent, country, location, postal, registered_country, subdivisions
 
     def initialize(@data : Any)
@@ -12,9 +14,12 @@ module MaxMindDB::Format::GeoIP2
       @country = Entity::Country.new(@data["country"]?)
       @location = Entity::Location.new(@data["location"]?)
       @postal = Entity::Postal.new(@data["postal"]?)
-      @registered_country = Entity::RegisteredCountry.new(@data["registered_countrys"]?)
+      @registered_country = Entity::RegisteredCountry.new(@data["registered_country"]?)
+      @represented_country = Entity::RepresentedCountry.new(@data["represented_country"]?)
+      @traits = Entity::Traits.new(@data["traits"]?)
       @subdivisions = [] of Entity::Subdivisions
-
+      @connection_type = @data["connection_type"].as_s if @data["connection_type"]?
+      
       if @data["subdivisions"]?
         @data["subdivisions"].size.times.each do |i|
           @subdivisions << Entity::Subdivisions.new(@data["subdivisions"][i]?)
