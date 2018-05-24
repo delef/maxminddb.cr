@@ -55,10 +55,25 @@ result.location.longitude # => 145.1833
 result.location.time_zone # => "Australia/Melbourne"
 
 result.postal.code # => "3095"
-result.registered_country.iso_code # => nil
-result.registered_country.geoname_id # => nil
-result.registered_country.names # => nil
-result.registered_country.name "en" # => nil
+
+result.registered_country.iso_code # => "AU"
+result.registered_country.geoname_id # => 2077456
+result.registered_country.name "en" # => "Australia"
+result.registered_country.names # => [{"de" => "Australien"},
+                                      {"en" =>
+                                        "Australia"},
+                                      {"es" =>
+                                        "Australia"},
+                                      {"fr" =>
+                                        "Australie"},
+                                      {"ja" =>
+                                        "オーストラリア"},
+                                      {"pt-BR" =>
+                                        "Austrália"},
+                                      {"ru" =>
+                                        "Австралия"},
+                                      {"zh-CN" =>
+                                        "澳大利亚"}]
 
 result.subdivisions[0].iso_code # => "VIC"
 result.subdivisions[0].geoname_id # => 2145234
