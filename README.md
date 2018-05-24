@@ -14,6 +14,62 @@ dependencies:
 
 ## Usage
 
+### GeoIP2
+```crystal
+require "maxminddb"
+
+mmdb = MaxMindDB::GeoIP2.new("#{__DIR__}/../data/GeoLite2-City.mmdb")
+result = mmdb.lookup("1.1.1.1")
+
+result.city.geoname_id # => 2151718
+result.city.name "en" # => "Research"
+result.city.names # => [{"en" => "Research"}]
+
+result.continent.code # => "OC"
+result.continent.geoname_id # => 6255151
+result.continent.name "en" # => "Oceania"
+result.continent.names # => [{"de" => "Ozeanien"},
+                             {"en" => "Oceania"},
+                             {"es" => "Oceanía"},
+                             {"fr" => "Océanie"},
+                             {"ja" => "オセアニア"},
+                             {"pt-BR" => "Oceania"},
+                             {"ru" => "Океания"},
+                             {"zh-CN" => "大洋洲"}]
+
+result.country.iso_code # => "AU"
+result.country.geoname_id # => 2077456
+result.country.name "en" # => "Australia"
+result.country.names # => [{"de" => "Australien"},
+                           {"en" => "Australia"},
+                           {"es" => "Australia"},
+                           {"fr" => "Australie"},
+                           {"ja" => "オーストラリア"},
+                           {"pt-BR" => "Austrália"},
+                           {"ru" => "Австралия"},
+                           {"zh-CN" => "澳大利亚"}]
+
+result.location.accuracy_radius # => 1000
+result.location.latitude # => -37.7
+result.location.longitude # => 145.1833
+result.location.time_zone # => "Australia/Melbourne"
+
+result.postal.code # => "3095"
+result.registered_country.iso_code # => nil
+result.registered_country.geoname_id # => nil
+result.registered_country.names # => nil
+result.registered_country.name "en" # => nil
+
+result.subdivisions[0].iso_code # => "VIC"
+result.subdivisions[0].geoname_id # => 2145234
+result.subdivisions[0].name "en" # => "Victoria"
+result.subdivisions[0].names # => [{"en" => "Victoria"},
+                                   {"pt-BR" => "Vitória"},
+                                   {"ru" => "Виктория"}]
+```
+
+### any other MaxMind Database
+
 ```crystal
 require "maxminddb"
 
@@ -41,6 +97,10 @@ result["postal"]["code"].as_s # => "3095"
 result["registered_country"]["iso_code"].as_s # => "AU"
 result["registered_country"]["geoname_id"].as_i # => 2077456
 result["registered_country"]["names"]["en"].as_s # => "Australia"
+
+result["subdivisions"][0]["iso_code"].as_s # => "VIC"
+result["subdivisions"][0]["geoname_id"].as_i # => 2145234
+result["subdivisions"][0]["names"]["en"].as_s # => "Victoria"
 ```
 
 ## Contributing
