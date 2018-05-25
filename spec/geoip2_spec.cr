@@ -16,7 +16,7 @@ describe MaxMindDB::GeoIP2 do
     end
 
     it "returns Array of Hash(String, String) of city names" do
-      city_db.lookup(ip).city.names.should be_a(Array(Hash(String, String)))
+      city_db.lookup(ip).city.names.should be_a(Hash(String, String))
     end
 
     it "returns Alameda as the English name" do
@@ -28,7 +28,15 @@ describe MaxMindDB::GeoIP2 do
     end
 
     it "returns Array of Hash(String, String) of country names" do
-      country_db.lookup(ip).country.names.should be_a(Array(Hash(String, String)))
+      country_db.lookup(ip).country.names.should be_a(Hash(String, String))
+    end
+
+    it "returns United States as the English country name from Hash" do
+      country_db.lookup(ip).country.names.not_nil!["en"].should eq("United States")
+    end
+
+    it "returns United States as the English country name (default locale)" do
+      country_db.lookup(ip).country.name.should eq("United States")
     end
 
     it "returns United States as the English country name" do
@@ -51,7 +59,7 @@ describe MaxMindDB::GeoIP2 do
       end
 
       it "returns Array of Hash(String, String) of city names" do
-        city_db.lookup(ip).city.names.should be_a(Array(Hash(String, String)))
+        city_db.lookup(ip).city.names.should be_a(Hash(String, String))
       end
 
       it "returns Alameda as the English name" do
@@ -59,7 +67,7 @@ describe MaxMindDB::GeoIP2 do
       end
 
       it "returns Array of Hash(String, String) of country names" do
-        country_db.lookup(ip).country.names.should be_a(Array(Hash(String, String)))
+        country_db.lookup(ip).country.names.should be_a(Hash(String, String))
       end
 
       it "returns United States as the English country name" do
