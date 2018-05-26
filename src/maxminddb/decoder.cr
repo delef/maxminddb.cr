@@ -3,7 +3,7 @@ module MaxMindDB
     def initialize(@buffer : Bytes)
     end
 
-    def build(position : Int, offset : Int): Node
+    def decode(position : Int, offset : Int): Node
       ctrl_byte = @buffer[position + offset]
       data_type = DataType.new(ctrl_byte.to_i32 >> 5)
       position, size = size_from_ctrl(ctrl_byte, position, offset)
@@ -56,13 +56,13 @@ module MaxMindDB
       v2 = fetch(position, offset, size)
       pointer = (v1 << (8 * size)) + v2 + POINTER_BASE_VALUES[size]
 
-      Node.new(position + size, build(pointer, offset).value)
+      Node.new(position + size, decode(pointer, offset).value)
     end
 
     private def decode_map(position, offset, size)
       val = size.times.each_with_object({} of String => MapValue) do |_, map|
-        key_node = build(position, offset)
-        val_node = build(key_node.position, offset)
+        key_node = decode(position, offset)
+        val_node = decode(key_node.position, offset)
         position = val_node.position
         map[key_node.to_any.as_s] = val_node.value
       end
@@ -101,7 +101,7 @@ module MaxMindDB
 
     private def decode_array(position, offset, size)
       val = Array(MapValue).new(size) do
-        node = build(position, offset)
+        node = decode(position, offset)
         position = node.position
         node.value
       end

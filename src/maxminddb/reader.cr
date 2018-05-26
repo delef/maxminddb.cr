@@ -22,7 +22,7 @@ module MaxMindDB
           raise ArgumentError.new("Invalid file format") unless offset
           offset += METADATA_BEGIN_MARKER.size
 
-          @decoder.build(offset, 0).to_any
+          @decoder.decode(offset, 0).to_any
         end
 
       @metadata.not_nil!
@@ -89,7 +89,7 @@ module MaxMindDB
           base = search_tree_size + DATA_SEPARATOR_SIZE
           position = (next_node - node_count) - DATA_SEPARATOR_SIZE
           
-          return @decoder.build(position, base).to_any
+          return @decoder.decode(position, base).to_any
         end
       end
 
