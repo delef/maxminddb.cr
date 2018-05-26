@@ -25,19 +25,19 @@ result.city.geoname_id # => 2151718
 result.city.name # => "Research"
 result.city.name "en" # => "Research"
 result.city.name "ru" # => nil
-result.city.names # => [{"en" => "Research"}]
+result.city.names # => {"en" => "Research"}
 
 result.continent.code # => "OC"
 result.continent.geoname_id # => 6255151
 result.continent.name # => "Oceania"
 result.continent.name "de" # => "Ozeanien"
-result.continent.names # => [{"de" => "Ozeanien"}, {"en" => "Oceania"}, ...]
+result.continent.names # => {"de" => "Ozeanien", "en" => "Oceania", ...}
 
 result.country.iso_code # => "AU"
 result.country.geoname_id # => 2077456
 result.country.name # => "Australia"
 result.country.name "de" # => "Australien"
-result.country.names # => [{"de" => "Australien"}, {"en" => "Australia"}, ...]
+result.country.names # => {"de" => "Australien", "en" => "Australia", ...}
 
 result.location.accuracy_radius # => 1000
 result.location.latitude # => -37.7
@@ -50,13 +50,13 @@ result.registered_country.iso_code # => "AU"
 result.registered_country.geoname_id # => 2077456
 result.registered_country.name # => "Australia"
 result.registered_country.name "de" # => "Australien"
-result.registered_country.names # => [{"de" => "Australien"}, {"en" => "Australia"}, ...]
+result.registered_country.names # => {"de" => "Australien", "en" => "Australia", ...}
 
 result.subdivisions[0].iso_code # => "VIC"
 result.subdivisions[0].geoname_id # => 2145234
-result.subdivisions[0].name
+result.subdivisions[0].name # => "Victoria"
 result.subdivisions[0].name "ru" # => "Виктория"
-result.subdivisions[0].names # => [{"en" => "Victoria"}, {"pt-BR" => "Vitória"}, {"ru" => "Виктория"}]
+result.subdivisions[0].names # => {"en" => "Victoria", "pt-BR" => "Vitória", "ru" => "Виктория"}
 ```
 
 ### any other MaxMind Database
