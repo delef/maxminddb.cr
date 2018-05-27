@@ -1,4 +1,5 @@
 # MaxMindDB.cr
+[![Build Status](https://api.travis-ci.org/delef/maxminddb.cr.svg)](https://travis-ci.org/veelenga/awesome-crystal)
 
 Pure Crystal [MaxMind DB](http://maxmind.github.io/MaxMind-DB/) reader, including the [GeoIP2](http://dev.maxmind.com/geoip/geoip2/downloadable/), which doesn't require [libmaxminddb](https://github.com/maxmind/libmaxminddb).
 
