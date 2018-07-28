@@ -1,49 +1,65 @@
 module MaxMindDB
   struct Any
-    getter raw
+    alias Type = Nil | Bool | Bytes | String | Int32 | UInt16 |
+                 UInt32 | UInt64 | UInt128 | Float32 | Float64 |
+                 Hash(String, Any) | Array(Any)
 
-    def initialize(@raw : MapValue)
+    getter raw : Type
+    def_hash raw
+
+    def initialize(@raw : Type)
     end
 
+    # Assumes the underlying value is a `Hash` and returns the element
+    # with the given key.
+    # Raises if the underlying value is not a `Hash`.
     def [](key : String) : Any
-      case data = @raw
+      case object = @raw
       when Hash
-        Any.new(data[key])
+        object[key]
       else
-        raise "Expected Hash for #[](key : String), not #{data.class}"
+        raise "Expected Hash for #[](key : String), not #{object.class}"
       end
     end
 
+    # Assumes the underlying value is a `Hash` and returns the element
+    # with the given key, or `nil` if the key is not present.
+    # Raises if the underlying value is not a `Hash`.
     def []?(key : String) : Any?
-      case data = @raw
+      case object = @raw
       when Hash
-        if value = data[key]?
-          Any.new(value)
-        end
+        object[key]?
       else
-        raise "Expected Hash for #[](key : String), not #{data.class}"
+        raise "Expected Hash for #[](key : String), not #{object.class}"
       end
     end
 
+    # Assumes the underlying value is an `Array` and returns the element
+    # at the given index.
+    # Raises if the underlying value is not an `Array`.
     def [](index : Int) : Any
-      case data = @raw
+      case object = @raw
       when Array
-        Any.new(data[index])
+        object[index]
       else
-        raise "Expected Array for #[](index : Int), not #{data.class}"
+        raise "Expected Array for #[](index : Int), not #{object.class}"
       end
     end
 
+    # Assumes the underlying value is an `Array` and returns the element
+    # at the given index, or `nil` if out of bounds.
+    # Raises if the underlying value is not an `Array`.
     def []?(index : Int) : Any?
-      case data = @raw
+      case object = @raw
       when Array
-        value = data[index]?
-        value.nil? ? nil : Any.new(value)
+        object[index]
       else
-        raise "Expected Array for #[](index : Int), not #{data.class}"
+        raise "Expected Array for #[](index : Int), not #{object.class}"
       end
     end
 
+    # Assumes the underlying value is an `Array` or `Hash` and returns its size.
+    # Raises if the underlying value is not an `Array` or `Hash`.
     def size : Int
       case object = @raw
       when Array
@@ -52,21 +68,6 @@ module MaxMindDB
         object.size
       else
         raise "Expected Array or Hash for #size, not #{object.class}"
-      end
-    end
-
-    def each : Nil
-      case object = @raw
-      when Array
-        object.each do |v|
-          yield(v)
-        end
-      when Hash
-        object.each do |k, v|
-          yield({k, v})
-        end
-      else
-        raise "Expected Array or Hash for #each, not #{object.class}"
       end
     end
 
@@ -146,19 +147,19 @@ module MaxMindDB
       as_s if @raw.is_a?(String)
     end
     
-    def as_a : Array(MapValue)
+    def as_a : Array(Any)
       @raw.as(Array)
     end
 
-    def as_a? : Array(MapValue)?
+    def as_a? : Array(Any)?
       as_a if @raw.is_a?(Array)
     end
 
-    def as_h : Hash(String, MapValue)
+    def as_h : Hash(String, Any)
       @raw.as(Hash)
     end
 
-    def as_h? : Hash(String, MapValue)?
+    def as_h? : Hash(String, Any)?
       as_h if @raw.is_a?(Hash)
     end
 
@@ -170,8 +171,50 @@ module MaxMindDB
       !found?
     end
 
+    def to_json(json : ::JSON::Builder)
+      raw.to_json(json)
+    end
+
     def inspect(io)
       @raw.inspect(io)
     end
+  end
+end
+
+class Object
+  def ===(other : MaxMindDB::Any)
+    self === other.raw
+  end
+end
+
+struct Value
+  def ==(other : MaxMindDB::Any)
+    self == other.raw
+  end
+end
+
+class Reference
+  def ==(other : MaxMindDB::Any)
+    self == other.raw
+  end
+end
+
+class Array
+  def ==(other : MaxMindDB::Any)
+    self == other.raw
+  end
+end
+
+class Hash
+  def ==(other : MaxMindDB::Any)
+    self == other.raw
+  end
+end
+
+class Regex
+  def ===(other : MaxMindDB::Any)
+    value = self === other.raw
+    $~ = $~
+    value
   end
 end

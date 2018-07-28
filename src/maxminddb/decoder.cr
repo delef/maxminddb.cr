@@ -1,5 +1,30 @@
 module MaxMindDB
   class Decoder
+    enum DataType
+      Extended,
+      Pointer,
+      Utf8,
+      Double,
+      Bytes,
+      Uint16,
+      Uint32,
+      Map,
+      Int32,
+      Uint64,
+      Uint128,
+      Array,
+      Container,
+      EndMarker,
+      Boolean,
+      Float,
+    end
+
+    record Node, position : Int32, value : Any::Type do
+      def to_any
+        Any.new(@value)
+      end
+    end
+
     def initialize(@buffer : Bytes)
     end
 
@@ -60,11 +85,11 @@ module MaxMindDB
     end
 
     private def decode_map(position, offset, size)
-      val = size.times.each_with_object({} of String => MapValue) do |_, map|
+      val = size.times.each_with_object({} of String => Any) do |_, map|
         key_node = decode(position, offset)
         val_node = decode(key_node.position, offset)
         position = val_node.position
-        map[key_node.to_any.as_s] = val_node.value
+        map[key_node.value.as(String)] = Any.new(val_node.value)
       end
 
       Node.new(position, val)
@@ -100,10 +125,11 @@ module MaxMindDB
     end
 
     private def decode_array(position, offset, size)
-      val = Array(MapValue).new(size) do
+      val = Array(Any).new(size) do
         node = decode(position, offset)
         position = node.position
-        node.value
+
+        Any.new(node.value)
       end
 
       Node.new(position, val)

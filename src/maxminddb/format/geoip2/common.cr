@@ -17,7 +17,7 @@ module MaxMindDB::Format::GeoIP2
       result = {} of String => String
 
       data["names"].as_h.each do |k, v|
-        result[k] = v.as(String)
+        result[k] = v.as_s
       end
 
       result
