@@ -1,16 +1,7 @@
 module MaxMindDB::Format::GeoIP2::Entity
-  EntityMap = {
-    City => [:geoname_id, :names],
-    Continent => [:geoname_id, :names, :code],
-    Country => [:geoname_id, :names, :iso_code],
-    Postal => [:code],
-    RegisteredCountry => [:geoname_id, :names, :iso_code],
-    RepresentedCountry => [:geoname_id, :names, :iso_code],
-    Subdivisions => [:geoname_id, :names, :iso_code]
-  }
-
   abstract class Base
     getter data
+    def_hash data
 
     def initialize(@data : Any?)
     end
@@ -66,6 +57,16 @@ module MaxMindDB::Format::GeoIP2::Entity
       data["is_satellite_provider"].as_bool if data["is_satellite_provider"]?
     end
   end
+
+  EntityMap = {
+    City => [:geoname_id, :names],
+    Continent => [:geoname_id, :names, :code],
+    Country => [:geoname_id, :names, :iso_code],
+    Postal => [:code],
+    RegisteredCountry => [:geoname_id, :names, :iso_code],
+    RepresentedCountry => [:geoname_id, :names, :iso_code],
+    Subdivisions => [:geoname_id, :names, :iso_code]
+  }
 
   {% begin %}
     {% for klass, methods in EntityMap %}
