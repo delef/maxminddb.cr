@@ -3,7 +3,6 @@ require "ipaddress"
 require "./maxminddb/kmp_bytes"
 require "./maxminddb/consts"
 require "./maxminddb/any"
-# require "./maxminddb/types".
 require "./maxminddb/decoder"
 require "./maxminddb/reader"
 require "./maxminddb/format/*"
