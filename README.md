@@ -1,4 +1,7 @@
 # MaxMindDB.cr
+[![Built with Crystal](https://img.shields.io/badge/built%20with-crystal-000000.svg?style=flat-square)](https://crystal-lang.org/)
+[![Build Status](https://api.travis-ci.org/delef/maxminddb.cr.svg)](https://travis-ci.org/delef/maxminddb.cr)
+[![Releases](https://img.shields.io/github/release/delef/maxminddb.cr.svg?style=flat-square)](https://github.com/delef/maxminddb.cr/releases)
 
 Pure Crystal [MaxMind DB](http://maxmind.github.io/MaxMind-DB/) reader, including the [GeoIP2](http://dev.maxmind.com/geoip/geoip2/downloadable/), which doesn't require [libmaxminddb](https://github.com/maxmind/libmaxminddb).
 
