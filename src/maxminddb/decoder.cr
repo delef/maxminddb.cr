@@ -16,14 +16,10 @@ module MaxMindDB
       Container,
       EndMarker,
       Boolean,
-      Float,
+      Float
     end
 
-    record Node, position : Int32, value : Any::Type do
-      def to_any
-        Any.new(@value)
-      end
-    end
+    record Node, position : Int32, value : Any::Type
 
     def initialize(@buffer : Bytes)
     end
@@ -39,20 +35,32 @@ module MaxMindDB
       end
 
       case data_type
-      when .pointer?                               then decode_pointer(position, offset, ctrl_byte)
-      when .utf8?                                  then decode_string(position, offset, size)
-      when .double?                                then decode_float(position, offset, size)
-      when .bytes?                                 then decode_bytes(position, offset, size)
-      when .uint16?, .uint32?, .uint64?, .uint128? then decode_uint(position, offset, size)
-      when .map?                                   then decode_map(position, offset, size)
-      when .int32?                                 then decode_int32(position, offset, size)
-      when .array?                                 then decode_array(position, offset, size)
-      when .container?                             then raise "Unsupport"
-      when .end_marker?                            then Node.new(position, nil)
-      when .boolean?                               then Node.new(position, !size.zero?)
-      when .float?                                 then decode_float(position, offset, size)
+      when .pointer?
+        decode_pointer(position, offset, ctrl_byte)
+      when .utf8?
+        decode_string(position, offset, size)
+      when .double?
+        decode_float(position, offset, size)
+      when .bytes?
+        decode_bytes(position, offset, size)
+      when .uint16?, .uint32?, .uint64?, .uint128?
+        decode_uint(position, offset, size)
+      when .map?
+        decode_map(position, offset, size)
+      when .int32?
+        decode_int32(position, offset, size)
+      when .array?
+        decode_array(position, offset, size)
+      when .container?
+        raise "MaxMindDB: Сontainers are not currently supported"
+      when .end_marker?
+        Node.new(position, nil)
+      when .boolean?
+        Node.new(position, !size.zero?)
+      when .float?
+        decode_float(position, offset, size)
       else
-        raise "Invalid Database error: \"Unexpected type number #{data_type}\""
+        raise "MaxMindDB: Invalid Database error: \"Unexpected type number #{data_type}\""
       end
     end
 
@@ -89,6 +97,7 @@ module MaxMindDB
         key_node = decode(position, offset)
         val_node = decode(key_node.position, offset)
         position = val_node.position
+
         map[key_node.value.as(String)] = Any.new(val_node.value)
       end
 
