@@ -1,6 +1,4 @@
-require "./base"
-require "./common"
-require "./entity/*"
+require "./entity"
 
 module MaxMindDB::Format::GeoIP2
   class Root
