@@ -12,7 +12,7 @@ end
 
 links = {
   country: "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz",
-  city: "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
+  city:    "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz",
 }
 
 get_db(links[:country], links[:country].split("/").last)

@@ -62,7 +62,7 @@ module MaxMindDB
     def read_node(node, flag)
       position = node_byte_size * node
       middle = @buffer[position + record_byte_size].to_i32 if node_byte_size.odd?
-      
+
       if flag.zero? # LEFT node
         val = @decoder.fetch(position, 0, record_byte_size)
         val += ((middle & 0xf0) << 20) if middle
@@ -74,7 +74,7 @@ module MaxMindDB
       val
     end
 
-    def lookup(addr : UInt32|UInt128|BigInt)
+    def lookup(addr : UInt32 | UInt128 | BigInt)
       node = 0
 
       (start_index...128).each do |i|
@@ -88,7 +88,7 @@ module MaxMindDB
         else
           base = search_tree_size + DATA_SEPARATOR_SIZE
           position = (next_node - node_count) - DATA_SEPARATOR_SIZE
-          
+
           return @decoder.decode(position, base).to_any
         end
       end

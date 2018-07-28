@@ -59,13 +59,13 @@ module MaxMindDB::Format::GeoIP2::Entity
   end
 
   EntityMap = {
-    City => [:geoname_id, :names],
-    Continent => [:geoname_id, :names, :code],
-    Country => [:geoname_id, :names, :iso_code],
-    Postal => [:code],
-    RegisteredCountry => [:geoname_id, :names, :iso_code],
+    City               => [:geoname_id, :names],
+    Continent          => [:geoname_id, :names, :code],
+    Country            => [:geoname_id, :names, :iso_code],
+    Postal             => [:code],
+    RegisteredCountry  => [:geoname_id, :names, :iso_code],
     RepresentedCountry => [:geoname_id, :names, :iso_code],
-    Subdivisions => [:geoname_id, :names, :iso_code]
+    Subdivisions       => [:geoname_id, :names, :iso_code],
   }
 
   {% begin %}
@@ -92,15 +92,15 @@ module MaxMindDB::Format::GeoIP2::Entity
               return unless data = @data
               data["names"][locale].as_s if data["names"][locale]?
             end
-        
+
             def names : Hash(String, String)?
               return unless data = @data
               result = {} of String => String
-        
+
               data["names"].as_h.each do |k, v|
                 result[k] = v.as_s
               end
-        
+
               result
             end
           {% end %}

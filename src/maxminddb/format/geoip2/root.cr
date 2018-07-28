@@ -17,7 +17,7 @@ module MaxMindDB::Format::GeoIP2
       @traits = Entity::Traits.new(@data["traits"]?)
       @subdivisions = [] of Entity::Subdivisions
       @connection_type = @data["connection_type"].as_s if @data["connection_type"]?
-      
+
       if @data["subdivisions"]?
         @data["subdivisions"].size.times.each do |i|
           @subdivisions << Entity::Subdivisions.new(@data["subdivisions"][i]?)

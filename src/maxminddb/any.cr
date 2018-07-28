@@ -74,11 +74,11 @@ module MaxMindDB
     def as_nil : Nil
       @raw.as(Nil)
     end
-  
+
     def as_bool : Bool
       @raw.as(Bool)
     end
-  
+
     def as_bool? : Bool?
       as_bool if @raw.is_a?(Bool)
     end
@@ -90,11 +90,11 @@ module MaxMindDB
     def as_i? : Int32?
       as_i if @raw.is_a?(Int)
     end
-    
+
     def as_u : UInt32
       @raw.as(UInt32).to_u32
     end
-  
+
     def as_u? : UInt32?
       as_u32 if @raw.is_a?(UInt32)
     end
@@ -146,7 +146,7 @@ module MaxMindDB
     def as_s? : String?
       as_s if @raw.is_a?(String)
     end
-    
+
     def as_a : Array(Any)
       @raw.as(Array)
     end

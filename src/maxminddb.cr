@@ -27,7 +27,7 @@ module MaxMindDB
       @reader.lookup(decimal)
     end
 
-    def lookup(addr : UInt32|UInt128|BigInt)
+    def lookup(addr : UInt32 | UInt128 | BigInt)
       @reader.lookup(addr)
     end
 
@@ -45,7 +45,7 @@ module MaxMindDB
       Format::GeoIP2.new(super(addr))
     end
 
-    def lookup(addr : UInt32|UInt128|BigInt)
+    def lookup(addr : UInt32 | UInt128 | BigInt)
       Format::GeoIP2.new(super(addr))
     end
   end

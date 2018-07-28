@@ -28,7 +28,7 @@ module MaxMindDB
     def initialize(@buffer : Bytes)
     end
 
-    def decode(position : Int, offset : Int): Node
+    def decode(position : Int, offset : Int) : Node
       ctrl_byte = @buffer[position + offset]
       data_type = DataType.new(ctrl_byte.to_i32 >> 5)
       position, size = size_from_ctrl(ctrl_byte, position, offset)
@@ -39,18 +39,18 @@ module MaxMindDB
       end
 
       case data_type
-      when .pointer? then decode_pointer(position, offset, ctrl_byte)
-      when .utf8? then decode_string(position, offset, size)
-      when .double? then decode_float(position, offset, size)
-      when .bytes? then decode_bytes(position, offset, size)
+      when .pointer?                               then decode_pointer(position, offset, ctrl_byte)
+      when .utf8?                                  then decode_string(position, offset, size)
+      when .double?                                then decode_float(position, offset, size)
+      when .bytes?                                 then decode_bytes(position, offset, size)
       when .uint16?, .uint32?, .uint64?, .uint128? then decode_uint(position, offset, size)
-      when .map? then decode_map(position, offset, size)
-      when .int32? then decode_int32(position, offset, size)
-      when .array? then decode_array(position, offset, size)
-      when .container? then raise "Unsupport"
-      when .end_marker? then Node.new(position, nil)
-      when .boolean? then Node.new(position, !size.zero?)
-      when .float? then decode_float(position, offset, size)
+      when .map?                                   then decode_map(position, offset, size)
+      when .int32?                                 then decode_int32(position, offset, size)
+      when .array?                                 then decode_array(position, offset, size)
+      when .container?                             then raise "Unsupport"
+      when .end_marker?                            then Node.new(position, nil)
+      when .boolean?                               then Node.new(position, !size.zero?)
+      when .float?                                 then decode_float(position, offset, size)
       else
         raise "Invalid Database error: \"Unexpected type number #{data_type}\""
       end
@@ -101,7 +101,7 @@ module MaxMindDB
     end
 
     private def decode_float(position, offset, size)
-      io  = IO::Memory.new(@buffer[position + offset, size])
+      io = IO::Memory.new(@buffer[position + offset, size])
       val = io.read_bytes(Float64, IO::ByteFormat::BigEndian)
       Node.new(position + size, val)
     end
