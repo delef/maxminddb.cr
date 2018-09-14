@@ -1,19 +1,25 @@
 require "spec"
 require "../src/maxminddb"
 
-def get_db(db_link, filename)
-  return if File.exists?("spec/cache/#{filename.gsub(".gz", "")}")
+def get_db(remote_link)
+  cache_dir = "spec/cache"
+  filename  = remote_link.split("/").last
 
-  Process.run "sh", {"-c", "curl #{db_link} -o spec/cache/#{filename}"}
-  Process.run "sh", {"-c", "gunzip spec/cache/#{filename}"}
+  return if File.exists?("#{cache_dir}/#{filename.gsub(".gz", "")}")
 
-  File.delete("spec/cache/#{filename}") if File.exists?("spec/cache/#{filename}")
+  unless Dir.exists?(cache_dir)
+    Dir.mkdir(cache_dir)
+  end
+
+  unless File.writable?(cache_dir)
+    raise "Invalid `/spec` directory permissions"
+  end
+
+  Process.run("sh", {"-c", "curl #{remote_link} -o spec/cache/#{filename}"})
+  Process.run("sh", {"-c", "gunzip spec/cache/#{filename}"})
 end
 
-links = {
-  country: "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz",
-  city:    "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz",
-}
-
-get_db(links[:country], links[:country].split("/").last)
-get_db(links[:city], links[:city].split("/").last)
+[
+  "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz",
+  "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
+].each { |remote_link| get_db(remote_link) }

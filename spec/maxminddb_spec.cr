@@ -4,8 +4,8 @@ describe MaxMindDB do
   city_db = MaxMindDB.new("spec/cache/GeoLite2-City.mmdb")
   country_db = MaxMindDB.new("spec/cache/GeoLite2-Country.mmdb")
 
-  context "for the ip 77.88.55.88 (IPv4)" do
-    ip = "74.125.225.224"
+  context "for the ip 77.88.77.88 (IPv4)" do
+    ip = "77.88.77.88"
 
     it "returns a MaxMindDB::Any" do
       city_db.lookup(ip).should be_a(MaxMindDB::Any)
@@ -15,20 +15,36 @@ describe MaxMindDB do
       city_db.lookup(ip).found?.should be_true
     end
 
-    it "returns Alameda as the English name" do
-      city_db.lookup(ip)["city"]["names"]["en"].as_s.should eq("Alameda")
+    it "returns Oslo as the English name" do
+      city_db.lookup(ip)["city"]["names"]["en"].as_s.should eq("Oslo")
     end
 
-    it "returns -122.2788 as the longitude" do
-      city_db.lookup(ip)["location"]["longitude"].as_f.should eq(-122.2788)
+    it "returns Oslo as the English name (symbol keys)" do
+      city_db.lookup(ip)[:city][:names][:en].as_s.should eq("Oslo")
     end
 
-    it "returns United States as the English country name" do
-      country_db.lookup(ip)["country"]["names"]["en"].as_s.should eq("United States")
+    it "returns 10.7487 as the longitude" do
+      city_db.lookup(ip)["location"]["longitude"].as_f.should eq(10.7487)
     end
 
-    it "returns US as the country iso code" do
-      country_db.lookup(ip)["country"]["iso_code"].as_s.should eq("US")
+    it "returns 10.7487 as the longitude (symbol keys)" do
+      city_db.lookup(ip)[:location][:longitude].as_f.should eq(10.7487)
+    end
+
+    it "returns Norway as the English country name" do
+      country_db.lookup(ip)["country"]["names"]["en"].as_s.should eq("Norway")
+    end
+
+    it "returns Norway as the English country name (symbol keys)" do
+      country_db.lookup(ip)[:country][:names][:en].as_s.should eq("Norway")
+    end
+
+    it "returns NO as the country iso code" do
+      country_db.lookup(ip)["country"]["iso_code"].as_s.should eq("NO")
+    end
+
+    it "returns NO as the country iso code (symbol keys)" do
+      country_db.lookup(ip)[:country][:iso_code].as_s.should eq("NO")
     end
 
     context "as a Integer" do
@@ -42,12 +58,12 @@ describe MaxMindDB do
         city_db.lookup(integer_ip).should be_a(MaxMindDB::Any)
       end
 
-      it "returns Alameda as the English name" do
-        city_db.lookup(integer_ip)["city"]["names"]["en"].as_s.should eq("Alameda")
+      it "returns Oslo as the English name" do
+        city_db.lookup(integer_ip)["city"]["names"]["en"].as_s.should eq("Oslo")
       end
 
-      it "returns United States as the English country name" do
-        country_db.lookup(integer_ip)["country"]["names"]["en"].as_s.should eq("United States")
+      it "returns Norway as the English country name" do
+        country_db.lookup(integer_ip)["country"]["names"]["en"].as_s.should eq("Norway")
       end
     end
   end

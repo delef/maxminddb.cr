@@ -4,8 +4,8 @@ describe MaxMindDB::GeoIP2 do
   city_db = MaxMindDB::GeoIP2.new("spec/cache/GeoLite2-City.mmdb")
   country_db = MaxMindDB::GeoIP2.new("spec/cache/GeoLite2-Country.mmdb")
 
-  context "for the ip 77.88.55.88 (IPv4)" do
-    ip = "74.125.225.224"
+  context "for the ip 77.88.77.88 (IPv4)" do
+    ip = "77.88.77.88"
 
     it "returns a MaxMindDB::Format::GeoIP2::Root" do
       city_db.lookup(ip).should be_a(MaxMindDB::Format::GeoIP2::Root)
@@ -19,32 +19,32 @@ describe MaxMindDB::GeoIP2 do
       city_db.lookup(ip).city.names.should be_a(Hash(String, String))
     end
 
-    it "returns Alameda as the English name" do
-      city_db.lookup(ip).city.name("en").should eq("Alameda")
+    it "returns Oslo as the English name" do
+      city_db.lookup(ip).city.name("en").should eq("Oslo")
     end
 
-    it "returns -122.2788 as the longitude" do
-      city_db.lookup(ip).location.longitude.should eq(-122.2788)
+    it "returns 10.7487 as the longitude" do
+      city_db.lookup(ip).location.longitude.should eq(10.7487)
     end
 
     it "returns Array of Hash(String, String) of country names" do
       country_db.lookup(ip).country.names.should be_a(Hash(String, String))
     end
 
-    it "returns United States as the English country name from Hash" do
-      country_db.lookup(ip).country.names.not_nil!["en"].should eq("United States")
+    it "returns Norway as the English country name from Hash" do
+      country_db.lookup(ip).country.names.not_nil!["en"].should eq("Norway")
     end
 
-    it "returns United States as the English country name (default locale)" do
-      country_db.lookup(ip).country.name.should eq("United States")
+    it "returns Norway as the English country name (default locale)" do
+      country_db.lookup(ip).country.name.should eq("Norway")
     end
 
-    it "returns United States as the English country name" do
-      country_db.lookup(ip).country.name("en").should eq("United States")
+    it "returns Norway as the English country name" do
+      country_db.lookup(ip).country.name("en").should eq("Norway")
     end
 
-    it "returns US as the country iso code" do
-      country_db.lookup(ip).country.iso_code.should eq("US")
+    it "returns NO as the country iso code" do
+      country_db.lookup(ip).country.iso_code.should eq("NO")
     end
 
     context "as a Integer" do
@@ -62,16 +62,16 @@ describe MaxMindDB::GeoIP2 do
         city_db.lookup(ip).city.names.should be_a(Hash(String, String))
       end
 
-      it "returns Alameda as the English name" do
-        city_db.lookup(ip).city.name("en").should eq("Alameda")
+      it "returns Oslo as the English name" do
+        city_db.lookup(ip).city.name("en").should eq("Oslo")
       end
 
       it "returns Array of Hash(String, String) of country names" do
         country_db.lookup(ip).country.names.should be_a(Hash(String, String))
       end
 
-      it "returns United States as the English country name" do
-        country_db.lookup(ip).country.name("en").should eq("United States")
+      it "returns Norway as the English country name" do
+        country_db.lookup(ip).country.name("en").should eq("Norway")
       end
     end
   end

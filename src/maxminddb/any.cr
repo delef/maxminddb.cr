@@ -13,10 +13,10 @@ module MaxMindDB
     # Assumes the underlying value is a `Hash` and returns the element
     # with the given key.
     # Raises if the underlying value is not a `Hash`.
-    def [](key : String) : Any
+    def [](key : String|Symbol) : Any
       case object = @raw
       when Hash
-        object[key]
+        object[key.to_s]
       else
         raise "Expected Hash for #[](key : String), not #{object.class}"
       end
@@ -25,10 +25,10 @@ module MaxMindDB
     # Assumes the underlying value is a `Hash` and returns the element
     # with the given key, or `nil` if the key is not present.
     # Raises if the underlying value is not a `Hash`.
-    def []?(key : String) : Any?
+    def []?(key : String|Symbol) : Any?
       case object = @raw
       when Hash
-        object[key]?
+        object[key.to_s]?
       else
         raise "Expected Hash for #[](key : String), not #{object.class}"
       end
