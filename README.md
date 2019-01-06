@@ -96,6 +96,11 @@ result["subdivisions"][0]["iso_code"].as_s # => "VIC"
 result["subdivisions"][0]["geoname_id"].as_i # => 2145234
 result["subdivisions"][0]["names"]["en"].as_s # => "Victoria"
 ```
+## Links
+
+ - MaxMind DB file format specification http://maxmind.github.io/MaxMind-DB/
+ - MaxMind test/sample DB files https://github.com/maxmind/MaxMind-DB
+ - GeoLite2 Free Downloadable Databases http://dev.maxmind.com/geoip/geoip2/geolite2/
 
 ## Contributing
 
