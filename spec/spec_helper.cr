@@ -5,11 +5,11 @@ def get_db(remote_link)
   cache_dir = "spec/cache"
   filename  = remote_link.split("/").last
 
-  return if File.exists?("#{cache_dir}/#{filename.gsub(".gz", "")}")
-
-  unless Dir.exists?(cache_dir)
-    Dir.mkdir(cache_dir)
+  if File.exists?("#{cache_dir}/#{filename.gsub(".gz", "")}")
+    return
   end
+
+  Dir.mkdir(cache_dir) unless Dir.exists?(cache_dir)
 
   unless File.writable?(cache_dir)
     raise "Invalid `/spec` directory permissions"

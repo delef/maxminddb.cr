@@ -60,7 +60,7 @@ module MaxMindDB
       when .float?
         decode_float(position, offset, size)
       else
-        raise "MaxMindDB: Invalid Database error: \"Unexpected type number #{data_type}\""
+        raise "MaxMindDB: \"Unexpected type number #{data_type}\" (Invalid database)"
       end
     end
 
