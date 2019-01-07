@@ -110,18 +110,7 @@ module MaxMindDB::Format::GeoIP2
       subdivisions
     end
 
-    ENTITIES = [
-      City,
-      Continent,
-      Country,
-      Location,
-      Postal,
-      RegisteredCountry,
-      RepresentedCountry,
-      Traits
-    ]
-
-    {% for entity_struct in ENTITIES %}
+    {% for entity_struct in Entity::STRUCT_MAP.keys.reject { |i| i == Entity::Subdivision } %}
       {% entity_name = entity_struct.stringify.underscore %}
 
       def {{entity_name.id}}? : Bool
