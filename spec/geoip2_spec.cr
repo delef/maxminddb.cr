@@ -23,8 +23,8 @@ describe MaxMindDB::GeoIP2 do
       city_db.lookup(ip).city.name("en").should eq("Oslo")
     end
 
-    it "returns 10.4907 as the longitude" do
-      city_db.lookup(ip).location.longitude.should eq(10.4907)
+    it "returns 10.7461 as the longitude" do
+      city_db.lookup(ip).location.longitude.should eq(10.7461)
     end
 
     it "returns Array of Hash(String, String) of country names" do

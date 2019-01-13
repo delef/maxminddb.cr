@@ -23,12 +23,12 @@ describe MaxMindDB do
       city_db.lookup(ip)[:city][:names][:en].as_s.should eq("Oslo")
     end
 
-    it "returns 10.4907 as the longitude" do
-      city_db.lookup(ip)["location"]["longitude"].as_f.should eq(10.4907)
+    it "returns 10.7461 as the longitude" do
+      city_db.lookup(ip)["location"]["longitude"].as_f.should eq(10.7461)
     end
 
-    it "returns 10.4907 as the longitude (symbol keys)" do
-      city_db.lookup(ip)[:location][:longitude].as_f.should eq(10.4907)
+    it "returns 10.7461 as the longitude (symbol keys)" do
+      city_db.lookup(ip)[:location][:longitude].as_f.should eq(10.7461)
     end
 
     it "returns Norway as the English country name" do
