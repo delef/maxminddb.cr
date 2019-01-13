@@ -29,16 +29,16 @@ module MaxMindDB::Format::GeoIP2
       Subdivision        => {geoname_id: Int32, names: Hash, iso_code: String},
       Traits             => {is_anonymous_proxy: Bool, is_satellite_provider: Bool},
       Location           => {accuracy_radius: Int32, latitude: Float64, longitude: Float64,
-                             metro_code: Int32, time_zone: String},
+                   metro_code: Int32, time_zone: String},
     }
     TYPE_MAP = {
-      Int32 => :as_i,
+      Int32   => :as_i,
       Float64 => :as_f,
-      String => :as_s,
-      Hash => :as_h,
-      Bool => :as_b
+      String  => :as_s,
+      Hash    => :as_h,
+      Bool    => :as_b,
     }
-  
+
     {% for entity_struct, props in STRUCT_MAP %}
       struct {{entity_struct}}
         include Helper
@@ -51,25 +51,25 @@ module MaxMindDB::Format::GeoIP2
             value = @value
             value && value[{{prop_name.stringify}}]? != nil
           end
-  
+
           {% if prop_name == :names %}
             def names : Hash(String, String)
               result = {} of String => String
-  
+
               if value = @value
                 value["names"].as_h.each { |k, v| result[k] = v.as_s }
               end
-  
+
               result
             end
-  
+
             def name(locale : String|Symbol = DEFAULT_LOCALE) : String?
               names[locale.to_s] if names.has_key? locale
             end
           {% else %}
             def {{prop_name.id}} : {{prop_type}}?
               value = @value
-              
+
               if value && value[{{prop_name.stringify}}]?
                 value[{{prop_name.stringify}}].{{TYPE_MAP[prop_type].id}}
               end
@@ -110,16 +110,24 @@ module MaxMindDB::Format::GeoIP2
       subdivisions
     end
 
-    {% for entity_struct in Entity::STRUCT_MAP.keys.reject { |i| i == Entity::Subdivision } %}
-      {% entity_name = entity_struct.stringify.underscore %}
+    {% begin %}
+      {%
+        entity_structs = Entity::STRUCT_MAP.keys.reject do |i|
+          [Entity::Subdivision].includes?(i)
+        end
+      %}
 
-      def {{entity_name.id}}? : Bool
-        @value.as_h.has_key? {{entity_name}}
-      end
+      {% for entity_struct in entity_structs %}
+        {% entity_name = entity_struct.stringify.underscore %}
 
-      def {{entity_name.id}} : Entity::{{entity_struct}}?
-        Entity::{{entity_struct}}.new(@value[{{entity_name}}]?)
-      end
+        def {{entity_name.id}}? : Bool
+          @value.as_h.has_key? {{entity_name}}
+        end
+
+        def {{entity_name.id}} : Entity::{{entity_struct}}?
+          Entity::{{entity_struct}}.new(@value[{{entity_name}}]?)
+        end
+      {% end %}
     {% end %}
   end
 

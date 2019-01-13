@@ -3,7 +3,7 @@ require "../src/maxminddb"
 
 def get_db(remote_link)
   cache_dir = "spec/cache"
-  filename  = remote_link.split("/").last
+  filename = remote_link.split("/").last
 
   if File.exists?("#{cache_dir}/#{filename.gsub(".gz", "")}")
     return
@@ -21,5 +21,5 @@ end
 
 [
   "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz",
-  "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz"
+  "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz",
 ].each { |remote_link| get_db(remote_link) }

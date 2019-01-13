@@ -1,7 +1,7 @@
 require "benchmark"
 require "../src/maxminddb"
 
-COUNT = 100_000
+COUNT      = 100_000
 COUNTRY_DB = MaxMindDB::GeoIP2.new("spec/cache/GeoLite2-Country.mmdb")
 
 Benchmark.bm do |x|
