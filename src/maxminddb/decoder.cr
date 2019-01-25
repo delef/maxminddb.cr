@@ -1,3 +1,6 @@
+require "./any"
+require "./cache"
+
 module MaxMindDB
   class Decoder
     enum DataType
@@ -19,129 +22,163 @@ module MaxMindDB
       Float
     end
 
-    record Node, position : Int32, value : Any::Type
-
-    def initialize(@buffer : Bytes)
+    record Node, offset : Int32, value : Any::Type do
+      def to_any
+        Any.new(value)
+      end
     end
 
-    def decode(position : Int, offset : Int) : Node
-      ctrl_byte = @buffer[position + offset]
-      data_type = DataType.new(ctrl_byte.to_i32 >> 5)
-      position, size = size_from_ctrl(ctrl_byte, position, offset)
+    CACHE_MAX_SIZE        = 6000
+    SIZE_BASE_VALUES      = [0, 29, 285, 65821]
+    POINTER_VALUE_OFFSETS = [0, 0, 1 << 11, (1 << 19) + ((1) << 11), 0]
+
+    def initialize(@buffer : Bytes, @base_offset : Int32, cache_max_size : Int32? = nil)
+      @cache = Cache(Int32, Node).new(cache_max_size || CACHE_MAX_SIZE)
+    end
+
+    def decode(offset : Int32) : Node
+      if offset >= @buffer.size
+        raise InvalidDatabaseException.new(
+                "The MaxMind DB file's data section contains bad data: " +
+                "pointer larger than the database."
+              )
+      end
+
+      ctrl_byte = @buffer[offset].to_i32
+      data_type = DataType.new(ctrl_byte >> 5)
+      offset += 1
+
+      if data_type.pointer?
+        pointer = decode_pointer(ctrl_byte, offset)
+        target_offset = pointer.value.as(Int32)
+        node = @cache.fetch(target_offset) { |offset| decode(offset) }
+        
+        return Node.new(pointer.offset, node.value)
+      end
 
       if data_type.extended?
-        data_type = DataType.new(7 + @buffer[position + offset].to_i32)
-        position += 1
+        type_number = 7 + @buffer[offset]
+        offset += 1
+
+        if type_number < 8
+          raise InvalidDatabaseException.new(
+                  "Something went horribly wrong in the decoder. " +
+                  "An extended type resolved to a type number < 8" +
+                  " (#{type_number})."
+                )
+        end
+
+        data_type = DataType.new(type_number)
       end
 
+      offset, size = size_from_ctrl_byte(ctrl_byte, offset)
+      decode_by_type(data_type, offset, size)
+    end
+
+    def decode_int(offset : Int32, size : Int32, base : Int32 = 0) : Int32
+      @buffer[offset, size].reduce(base) { |r, v| (r << 8) | v.to_i32 }
+    end
+
+    private def decode_by_type(data_type : Enum, offset : Int32, size : Int32) : Node
       case data_type
-      when .pointer?
-        decode_pointer(position, offset, ctrl_byte)
       when .utf8?
-        decode_string(position, offset, size)
+        decode_string(offset, size)
       when .double?
-        decode_float(position, offset, size)
+        decode_float(offset, size)
       when .bytes?
-        decode_bytes(position, offset, size)
+        decode_bytes(offset, size)
       when .uint16?, .uint32?, .uint64?, .uint128?
-        decode_uint(position, offset, size)
+        decode_uint(offset, size)
       when .map?
-        decode_map(position, offset, size)
+        decode_map(offset, size)
       when .int32?
-        decode_int32(position, offset, size)
+        decode_int32(offset, size)
       when .array?
-        decode_array(position, offset, size)
+        decode_array(offset, size)
       when .container?
-        raise "MaxMindDB: Сontainers are not currently supported"
+        raise InvalidDatabaseException.new("Сontainers are not currently supported")
       when .end_marker?
-        Node.new(position, nil)
+        Node.new(offset, nil)
       when .boolean?
-        Node.new(position, !size.zero?)
+        Node.new(offset, !size.zero?)
       when .float?
-        decode_float(position, offset, size)
+        decode_float(offset, size)
       else
-        raise "MaxMindDB: \"Unexpected type number #{data_type}\" (Invalid database)"
+        raise InvalidDatabaseException.new("Unknown or unexpected type: #{data_type}")
       end
     end
 
-    def fetch(position, offset, size)
-      bytes = @buffer[position + offset, size]
-      bytes.reduce(0) { |r, v| (r << 8) + v }
-    end
-
-    private def size_from_ctrl(ctrl_byte, position, offset)
-      position += 1
+    private def size_from_ctrl_byte(ctrl_byte : Int32, offset : Int32) : Tuple
       size = ctrl_byte & 0x1f
 
       if size >= 29
-        byte_size = size - 29 + 1
-        val = fetch(position, offset, byte_size)
-        position += byte_size
-        size = val + SIZE_BASE_VALUES[byte_size]
+        bytes_size = size - 29 + 1
+        int = decode_int(offset, bytes_size)
+        offset += bytes_size
+        size = SIZE_BASE_VALUES[bytes_size] + int
       end
 
-      {position, size}
+      {offset, size}
     end
 
-    private def decode_pointer(position, offset, ctrl_byte)
-      size = ((ctrl_byte >> 3) & 0x3) + 1
-      v1 = ctrl_byte.to_i32 & 0x7
-      v2 = fetch(position, offset, size)
-      pointer = (v1 << (8 * size)) + v2 + POINTER_BASE_VALUES[size]
+    # Pointers are a special case, we don't read the next 'size' bytes, we
+    # use the size to determine the length of the pointer and then follow it.
+    private def decode_pointer(ctrl_byte : Int32, offset : Int32) : Node
+      pointer_size = ((ctrl_byte >> 3) & 0x3) + 1
+      base = pointer_size == 4 ? 0 : (ctrl_byte & 0x7)
+      packed = decode_int(offset, pointer_size, base)
+      pointer = packed + @base_offset + POINTER_VALUE_OFFSETS[pointer_size]
 
-      Node.new(position + size, decode(pointer, offset).value)
+      Node.new(offset + pointer_size, pointer)
     end
 
-    private def decode_map(position, offset, size)
-      val = size.times.each_with_object({} of String => Any) do |_, map|
-        key_node = decode(position, offset)
-        val_node = decode(key_node.position, offset)
-        position = val_node.position
+    private def decode_string(offset : Int32, size : Int32) : Node
+      Node.new(offset + size, String.new(@buffer[offset, size]))
+    end
 
-        map[key_node.value.as(String)] = Any.new(val_node.value)
+    private def decode_float(offset : Int, size : Int32) : Node
+      io = IO::Memory.new(@buffer[offset, size])
+      value = io.read_bytes(Float64, IO::ByteFormat::BigEndian)
+      Node.new(offset + size, value)
+    end
+
+    private def decode_bytes(offset : Int32, size : Int32) : Node
+      Node.new(offset + size, @buffer[offset, size])
+    end
+
+    private def decode_uint(offset : Int32, size : Int32) : Node
+      Node.new(offset + size, decode_int(offset, size))
+    end
+
+    private def decode_int32(offset : Int32, size : Int32) : Node
+      Node.new(offset + size, decode_int(offset, size))
+    end
+    
+    private def decode_array(offset : Int32, size : Int32) : Node
+      value = [] of Any
+
+      size.times.each do
+        node = decode(offset)
+        offset = node.offset
+
+        value << node.to_any
       end
 
-      Node.new(position, val)
+      Node.new(offset, value)
     end
 
-    private def decode_string(position, offset, size)
-      val = String.new(@buffer[position + offset, size])
-      Node.new(position + size, val)
-    end
+    private def decode_map(offset : Int32, size : Int32) : Node
+      map = {} of String => Any
 
-    private def decode_float(position, offset, size)
-      io = IO::Memory.new(@buffer[position + offset, size])
-      val = io.read_bytes(Float64, IO::ByteFormat::BigEndian)
-      Node.new(position + size, val)
-    end
+      size.times.each do
+        key_node = decode(offset)
+        val_node = decode(key_node.offset)
+        offset = val_node.offset
 
-    private def decode_bytes(position, offset, size)
-      val = @buffer[position + offset, size]
-      Node.new(position + size, val)
-    end
-
-    private def decode_uint(position, offset, size)
-      val = fetch(position, offset, size)
-      Node.new(position + size, val)
-    end
-
-    private def decode_int32(position, offset, size)
-      v1 = (@buffer[position + offset, size].to_unsafe.as(Int32*)).value
-      bits = size * 8
-      val = (v1 & ~(1 << bits)) - (v1 & (1 << bits))
-
-      Node.new(position + size, val)
-    end
-
-    private def decode_array(position, offset, size)
-      val = Array(Any).new(size) do
-        node = decode(position, offset)
-        position = node.position
-
-        Any.new(node.value)
+        map[key_node.value.as(String)] = val_node.to_any
       end
 
-      Node.new(position, val)
+      Node.new(offset, map)
     end
   end
 end

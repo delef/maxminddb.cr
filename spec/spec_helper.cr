@@ -1,25 +1,22 @@
 require "spec"
 require "../src/maxminddb"
 
-def get_db(remote_link)
-  cache_dir = "spec/cache"
-  filename = remote_link.split("/").last
+DATABASES_PATH = "spec/databases"
 
-  if File.exists?("#{cache_dir}/#{filename.gsub(".gz", "")}")
-    return
+Dir.glob("#{DATABASES_PATH}/*.mmdb.gz") do |file_path|
+  unless File.writable?(DATABASES_PATH)
+    raise "Invalid `#{DATABASES_PATH}` directory permissions"
   end
 
-  Dir.mkdir(cache_dir) unless Dir.exists?(cache_dir)
-
-  unless File.writable?(cache_dir)
-    raise "Invalid `/spec` directory permissions"
-  end
-
-  Process.run("sh", {"-c", "curl #{remote_link} -o spec/cache/#{filename}"})
-  Process.run("sh", {"-c", "gunzip spec/cache/#{filename}"})
+  Process.run("sh", {"-c", "gunzip -k #{file_path}"})
 end
 
-[
-  "http://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz",
-  "http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz",
-].each { |remote_link| get_db(remote_link) }
+def db_path(name : String)
+  path = "#{DATABASES_PATH}/#{name}.mmdb"
+
+  unless File.readable?(path)
+    raise "Invalid `#{path}` directory permissions"
+  end
+
+  path
+end

@@ -1,99 +1,101 @@
+require "./decoder"
+require "./metadata"
+
 module MaxMindDB
   class Reader
-    @metadata : Any? = nil
-    @ip_version : Int32? = nil
-    @node_count : Int32? = nil
-    @node_byte_size : Int32? = nil
+    getter metadata
 
-    def initialize(@db_path : String)
-      raise ArgumentError.new("Database not found") unless File.exists?(db_path)
+    DATA_SEPARATOR_SIZE = 16
 
-      size = File.size(@db_path)
-      @buffer = Bytes.new(size)
-      File.open(@db_path, "rb") { |file| file.read_fully(@buffer) }
-
-      @decoder = Decoder.new(@buffer)
-    end
-
-    def metadata
-      @metadata ||=
-        begin
-          offset = KmpBytes.search(@buffer, METADATA_BEGIN_MARKER)[0]
-          raise ArgumentError.new("Invalid file format") unless offset
-          offset += METADATA_BEGIN_MARKER.size
-
-          Any.new(@decoder.decode(offset, 0).value)
-        end
-
-      @metadata.not_nil!
-    end
-
-    def ip_version
-      @ip_version ||= metadata["ip_version"].as_i
-      @ip_version.not_nil!
-    end
-
-    def node_count
-      @node_count ||= metadata["node_count"].as_i
-      @node_count.not_nil!
-    end
-
-    def node_byte_size
-      @node_byte_size ||= metadata["record_size"].as_i * 2 / 8
-      @node_byte_size.not_nil!
-    end
-
-    def start_index
-      ip_version == 4 ? 96 : 0
-    end
-
-    def search_tree_size
-      node_count * node_byte_size
-    end
-
-    def record_byte_size
-      node_byte_size / 2
-    end
-
-    def version
-      "#{@data["binary_format_major_version"]}.#{@data["binary_format_minor_version"]}"
-    end
-
-    def read_node(node, flag)
-      position = node_byte_size * node
-      middle = @buffer[position + record_byte_size].to_i32 if node_byte_size.odd?
-
-      if flag.zero? # LEFT node
-        val = @decoder.fetch(position, 0, record_byte_size)
-        val += ((middle & 0xf0) << 20) if middle
-      else # RIGHT node
-        val = @decoder.fetch(position + node_byte_size - record_byte_size, 0, record_byte_size)
-        val += ((middle & 0xf) << 24) if middle
+    def initialize(db_path : String)
+      unless File.exists?(db_path)
+        raise InvalidDatabaseException.new("Database not found")
       end
 
-      val
+      @buffer = Bytes.new(File.size(db_path))
+      File.open(db_path, "rb") { |file| file.read_fully(@buffer) }
+
+      @metadata = Metadata.new(@buffer)
+      @decoder = Decoder.new(@buffer, @metadata.search_tree_size + DATA_SEPARATOR_SIZE)
     end
 
-    def lookup(addr : UInt32 | UInt128 | BigInt)
-      node = 0
+    def get(address : IPAddress)
+      pointer = find_address_in_tree(address.data)
+      
+      if pointer > 0
+        resolve_data_pointer(pointer)
+      else
+        empty_result
+      end
+    end
 
-      (start_index...128).each do |i|
-        flag = (addr >> (127 - i)) & 1
-        next_node = read_node(node, flag)
+    private def find_address_in_tree(raw_address : Bytes) : Int32
+      start_node = start_node(raw_address.size)
+      node_number = start_node
+      
+      (@metadata.tree_depth - start_node).times.each do |i|
+        break if node_number >= @metadata.node_count
 
-        raise ArgumentError.new("Invalid file format") if next_node.zero?
+        index = raw_address[i >> 3]
+        bit = 1 & (index >> 7 - (i % 8))
 
-        if next_node < node_count
-          node = next_node
-        else
-          base = search_tree_size + DATA_SEPARATOR_SIZE
-          position = (next_node - node_count) - DATA_SEPARATOR_SIZE
-
-          return Any.new(@decoder.decode(position, base).value)
-        end
+        node_number = read_node(node_number, bit)
       end
 
-      raise ArgumentError.new("Invalid file format")
+      if node_number == @metadata.node_count # record is empty
+        0
+      elsif node_number > @metadata.node_count # is a data pointer
+        node_number
+      else
+        raise InvalidDatabaseException.new("Something bad happened")
+      end
+    end
+
+    private def start_node(address_size)
+      @metadata.ip_version == 6 && address_size == 4 ? 128 - 32 : 0
+    end
+
+    private def read_node(node_number : Int, index : Int) : Int
+      base_offset = node_number * @metadata.node_byte_size
+
+      case @metadata.record_size
+      when 24
+        @decoder.decode_int(base_offset + index * 3, 3)
+      when 28
+        middle_byte = @buffer[base_offset + 3].to_i32
+
+        middle =
+          if index.zero?
+            (0xf0 & middle_byte) >> 4
+          else
+            middle_byte & 0x0f
+          end
+
+        @decoder.decode_int(base_offset + index * 4, 3, middle)
+      when 32
+        @decoder.decode_int(base_offset + index * 4, 4)
+      else
+        raise InvalidDatabaseException.new(
+                "Unknown record size: #{@metadata.record_byte_size}"
+              )
+      end
+    end
+
+    private def resolve_data_pointer(pointer : Int)
+      resolved = pointer - @metadata.node_count + @metadata.search_tree_size
+
+      if resolved > @buffer.size
+        raise InvalidDatabaseException.new(
+                "The MaxMind DB file's search tree is corrupt: " +
+                "contains pointer larger than the database."
+              )
+      end
+
+      @decoder.decode(resolved).to_any
+    end
+
+    private def empty_result
+      Decoder::Node.new(0, {} of String => Any).to_any
     end
   end
 end

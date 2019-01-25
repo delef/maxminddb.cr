@@ -1,3 +1,5 @@
+require "json"
+
 module MaxMindDB
   struct Any
     alias Type = Nil | Bool | Bytes | String | Int32 | UInt16 |
@@ -10,51 +12,39 @@ module MaxMindDB
     def initialize(@raw : Type)
     end
 
-    # Assumes the underlying value is a `Hash` and returns the element
-    # with the given key.
-    # Raises if the underlying value is not a `Hash`.
-    def [](key : String | Symbol) : Any
+    # Assumes the underlying value is an `Array` or `Hash`
+    # and returns the element at the given *index_or_key*.
+    # Raises if the underlying value is not an `Array` nor a `Hash`.
+    def [](index_or_key : Int | String | Symbol) : Any
       case object = @raw
+      when Array
+        if index_or_key.is_a?(Int)
+          object[index_or_key.to_i]
+        else
+          raise "Expected int key for Array#[], not #{object.class}"
+        end
       when Hash
-        object[key.to_s]
+        object[index_or_key.to_s]
       else
         raise "Expected Hash for #[](key : String), not #{object.class}"
       end
     end
 
-    # Assumes the underlying value is a `Hash` and returns the element
-    # with the given key, or `nil` if the key is not present.
-    # Raises if the underlying value is not a `Hash`.
-    def []?(key : String | Symbol) : Any?
+    # Assumes the underlying value is an `Array` or `Hash` and returns the element
+    # at the given *index_or_key*, or `nil` if out of bounds or the key is missing.
+    # Raises if the underlying value is not an `Array` nor a `Hash`.
+    def []?(index_or_key : Int | String | Symbol) : Any?
       case object = @raw
+      when Array
+        if index_or_key.is_a?(Int)
+          object[index_or_key]
+        else
+          raise "Expected int key for Array#[], not #{object.class}"
+        end
       when Hash
-        object[key.to_s]?
+        object[index_or_key.to_s]?
       else
         raise "Expected Hash for #[](key : String), not #{object.class}"
-      end
-    end
-
-    # Assumes the underlying value is an `Array` and returns the element
-    # at the given index.
-    # Raises if the underlying value is not an `Array`.
-    def [](index : Int) : Any
-      case object = @raw
-      when Array
-        object[index]
-      else
-        raise "Expected Array for #[](index : Int), not #{object.class}"
-      end
-    end
-
-    # Assumes the underlying value is an `Array` and returns the element
-    # at the given index, or `nil` if out of bounds.
-    # Raises if the underlying value is not an `Array`.
-    def []?(index : Int) : Any?
-      case object = @raw
-      when Array
-        object[index]
-      else
-        raise "Expected Array for #[](index : Int), not #{object.class}"
       end
     end
 

@@ -16,6 +16,10 @@ module MaxMindDB::Format::GeoIP2
     def inspect(io)
       @value.inspect(io)
     end
+
+    macro method_missing(call)
+      nil
+    end
   end
 
   module Entity
@@ -29,7 +33,7 @@ module MaxMindDB::Format::GeoIP2
       Subdivision        => {geoname_id: Int32, names: Hash, iso_code: String},
       Traits             => {is_anonymous_proxy: Bool, is_satellite_provider: Bool},
       Location           => {accuracy_radius: Int32, latitude: Float64, longitude: Float64,
-                   metro_code: Int32, time_zone: String},
+                             metro_code: Int32, time_zone: String},
     }
     TYPE_MAP = {
       Int32   => :as_i,
@@ -48,29 +52,28 @@ module MaxMindDB::Format::GeoIP2
 
         {% for prop_name, prop_type in props %}
           def {{prop_name}}?: Bool
-            value = @value
-            value && value[{{prop_name.stringify}}]? != nil
+            if value = @value
+              value.as_h.has_key?({{prop_name.stringify}})
+            else
+              false
+            end
           end
 
           {% if prop_name == :names %}
             def names : Hash(String, String)
-              result = {} of String => String
-
-              if value = @value
-                value["names"].as_h.each { |k, v| result[k] = v.as_s }
+              if (value = @value) && names?
+                value["names"].as_h.transform_values &.as_s
+              else
+                {} of String => String
               end
-
-              result
             end
 
-            def name(locale : String|Symbol = DEFAULT_LOCALE) : String?
+            def name(locale : String | Symbol = DEFAULT_LOCALE) : String?
               names[locale.to_s] if names.has_key? locale
             end
           {% else %}
             def {{prop_name.id}} : {{prop_type}}?
-              value = @value
-
-              if value && value[{{prop_name.stringify}}]?
+              if (value = @value) && {{prop_name}}?
                 value[{{prop_name.stringify}}].{{TYPE_MAP[prop_type].id}}
               end
             end
