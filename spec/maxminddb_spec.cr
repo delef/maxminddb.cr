@@ -3,90 +3,138 @@ require "./spec_helper"
 describe MaxMindDB do
   city_db = MaxMindDB.new(db_path("GeoIP2-City-Test"))
 
-  context "for the ip 81.2.69.142" do
-    ip = "81.2.69.142"
+  JSON.parse(File.read(source_path("GeoIP2-City-Test"))).as_a.each do |part|
+    part.as_h.each do |address, data|
+      context "for the ip #{address}" do
+        it "returns a MaxMindDB::Any" do
+          city_db.get(address).should be_a(MaxMindDB::Any)
+        end
 
-    it "returns a MaxMindDB::Any" do
-      city_db.get(ip).should be_a(MaxMindDB::Any)
-    end
+        it "found?" do
+          city_db.get(address).found?.should be_true
+        end
 
-    it "found?" do
-      city_db.get(ip).found?.should be_true
-    end
+        if "has a country?"
+          city_db.get(address).as_h.has_key?("country").should eq(data.as_h.has_key?("country"))
+        end
 
-    it "returns United Kingdom as the English country name" do
-      city_db.get(ip)["country"]["names"]["en"].as_s.should eq("United Kingdom")
-      city_db.get(ip)[:country][:names][:en].as_s.should eq("United Kingdom")
-    end
+        if data["city"]?
+          it "returns #{data["city"]["geoname_id"]} as city geoname id" do
+            any = data["city"]["geoname_id"]
+            geoname_id = any.as_s? ? any.as_s.to_i : any.as_i
 
-    it "returns GB as the country iso code" do
-      city_db.get(ip)["country"]["iso_code"].as_s.should eq("GB")
-      city_db.get(ip)[:country][:iso_code].as_s.should eq("GB")
-    end
+            city_db.get(address)["city"]["geoname_id"].as_i.should eq(geoname_id)
+            city_db.get(address)[:city][:geoname_id].as_i.should eq(geoname_id)
+          end
 
-    it "returns London as the English name" do
-      city_db.get(ip)["city"]["names"]["en"].as_s.should eq("London")
-      city_db.get(ip)[:city][:names][:en].as_s.should eq("London")
-    end
+          it "returns #{data["city"]["names"]["en"]} as city name (locale: en)" do
+            city_db.get(address)["city"]["names"]["en"].as_s.should eq(data["city"]["names"]["en"])
+            city_db.get(address)[:city][:names][:en].as_s.should eq(data["city"]["names"]["en"])
+          end
+        end
 
-    it "returns 51.5142 as the latitude" do
-      city_db.get(ip)["location"]["latitude"].as_f.should eq(51.5142)
-      city_db.get(ip)[:location][:latitude].as_f.should eq(51.5142)
-    end
+        if data["continent"]?
+          it "returns #{data["continent"]["geoname_id"]} as continent geoname id" do
+            city_db.get(address)["continent"]["geoname_id"].as_i.should eq(data["continent"]["geoname_id"].as_i)
+            city_db.get(address)[:continent][:geoname_id].as_i.should eq(data["continent"]["geoname_id"].as_i)
+          end
 
-    it "returns -0.0931 as the longitude" do
-      city_db.get(ip)["location"]["longitude"].as_f.should eq(-0.0931)
-      city_db.get(ip)[:location][:longitude].as_f.should eq(-0.0931)
-    end
-  end
+          it "returns #{data["continent"]["names"]["en"]} as continent name (locale: en)" do
+            city_db.get(address)["continent"]["names"]["en"].as_s.should eq(data["continent"]["names"]["en"].as_s)
+            city_db.get(address)[:continent][:names][:en].as_s.should eq(data["continent"]["names"]["en"].as_s)
+          end
 
-  context "for the ip 2a02:f1c0:510:8:9a6:442c:f8e0:7133 (2a02:f1c0::/29)" do
-    ip = "2a02:f1c0:510:8:9a6:442c:f8e0:7133"
+          it "returns #{data["continent"]["code"]} as continent code" do
+            city_db.get(address)["continent"]["code"].as_s.should eq(data["continent"]["code"])
+            city_db.get(address)[:continent][:code].as_s.should eq(data["continent"]["code"])
+          end
+        end
 
-    it "found?" do
-      city_db.get(ip).found?.should be_true
-    end
+        if data["country"]?
+          it "returns #{data["country"]["geoname_id"]} as country geoname id" do
+            city_db.get(address)["country"]["geoname_id"].as_i.should eq(data["country"]["geoname_id"].as_i)
+            city_db.get(address)[:country][:geoname_id].as_i.should eq(data["country"]["geoname_id"].as_i)
+          end
 
-    it "returns Ukraine as the English country name" do
-      city_db.get(ip)["country"]["names"]["en"].as_s.should eq("Ukraine")
-      city_db.get(ip)[:country][:names][:en].as_s.should eq("Ukraine")
-    end
+          it "returns #{data["country"]["names"]["en"]} as country name (locale: en)" do
+            city_db.get(address)["country"]["names"]["en"].as_s.should eq(data["country"]["names"]["en"].as_s)
+            city_db.get(address)[:country][:names][:en].as_s.should eq(data["country"]["names"]["en"].as_s)
+          end
 
-    it "returns UA as the country iso code" do
-      city_db.get(ip)["country"]["iso_code"].as_s.should eq("UA")
-      city_db.get(ip)[:country][:iso_code].as_s.should eq("UA")
-    end
-  end
+          it "returns #{data["country"]["iso_code"]} as ISO country code" do
+            city_db.get(address)["country"]["iso_code"].as_s.should eq(data["country"]["iso_code"])
+            city_db.get(address)[:country][:iso_code].as_s.should eq(data["country"]["iso_code"])
+          end
+        end
 
-  context "for the ip 127.0.0.1 (local ip)" do
-    ip = "127.0.0.1"
+        if data["location"]?
+          it "returns #{data["location"]["accuracy_radius"]} as location accuracy radius" do
+            any = data["location"]["accuracy_radius"]
+            accuracy_radius = any.as_s? ? any.as_s.to_i : any.as_i
 
-    it "returns a MaxMindDB::Any" do
-      city_db.get(ip).should be_a(MaxMindDB::Any)
-    end
+            city_db.get(address)["location"]["accuracy_radius"].as_i.should eq(accuracy_radius)
+            city_db.get(address)[:location][:accuracy_radius].as_i.should eq(accuracy_radius)
+          end
 
-    it "found?" do
-      city_db.get(ip).found?.should be_false
-    end
-  end
+          it "returns #{data["location"]["latitude"]} as location latitude" do
+            any = data["location"]["latitude"]
+            latitude = any.as_s? ? any.as_s.to_f : any.as_f
 
-  context "test ips" do
-    [
-      {"81.2.69.144",   "GB"},
-      {"216.160.83.56", "US"},
-      {"89.160.20.112", "SE"},
-      {"89.160.20.128", "SE"},
-      {"67.43.156.0",   "BT"},
-      {"202.196.224.0", "PH"},
-      {"175.16.199.0",  "CN"},
-    ].each do |ip, iso|
-      it "returns a MaxMindDB::Any" do
-        city_db.get(ip).should be_a(MaxMindDB::Any)
-      end
+            city_db.get(address)["location"]["latitude"].as_f.should eq(latitude)
+            city_db.get(address)[:location][:latitude].as_f.should eq(latitude)
+          end
 
-      it "returns #{iso} as the country iso code" do
-        city_db.get(ip)["country"]["iso_code"].as_s.should eq(iso)
-        city_db.get(ip)[:country][:iso_code].as_s.should eq(iso)
+          it "returns #{data["location"]["longitude"]} as location longitude" do
+            any = data["location"]["longitude"]
+            longitude = any.as_s? ? any.as_s.to_f : any.as_f
+
+            city_db.get(address)["location"]["longitude"].as_f.should eq(longitude)
+            city_db.get(address)[:location][:longitude].as_f.should eq(longitude)
+          end
+
+          if data["location"]["time_zone"]?
+            it "returns #{data["location"]["time_zone"]} as location time zone" do
+              city_db.get(address)["location"]["time_zone"].as_s.should eq(data["location"]["time_zone"].as_s)
+              city_db.get(address)[:location][:time_zone].as_s.should eq(data["location"]["time_zone"].as_s)
+            end
+          end
+        end
+
+        if data["registered_country"]?
+          it "returns #{data["registered_country"]["geoname_id"]} as registered country geoname id" do
+            city_db.get(address)["registered_country"]["geoname_id"].as_i.should eq(data["registered_country"]["geoname_id"].as_i)
+            city_db.get(address)[:registered_country][:geoname_id].as_i.should eq(data["registered_country"]["geoname_id"].as_i)
+          end
+
+          it "returns #{data["registered_country"]["names"]["en"]} as registered country name (locale: en)" do
+            city_db.get(address)["registered_country"]["names"]["en"].as_s.should eq(data["registered_country"]["names"]["en"].as_s)
+            city_db.get(address)[:registered_country][:names][:en].as_s.should eq(data["registered_country"]["names"]["en"].as_s)
+          end
+
+          it "returns #{data["registered_country"]["iso_code"]} as ISO registered country code" do
+            city_db.get(address)["registered_country"]["iso_code"].as_s.should eq(data["registered_country"]["iso_code"])
+            city_db.get(address)[:registered_country][:iso_code].as_s.should eq(data["registered_country"]["iso_code"])
+          end
+        end
+
+        if data["subdivisions"]?
+          data["subdivisions"].as_a.each_with_index do |subdivision, index|
+            it "returns #{subdivision["geoname_id"]} as subdivision geoname id" do
+              city_db.get(address)["subdivisions"][index]["geoname_id"].as_i.should eq(subdivision["geoname_id"].as_i)
+              city_db.get(address)[:subdivisions][index][:geoname_id].as_i.should eq(subdivision["geoname_id"].as_i)
+            end
+
+            it "returns #{subdivision["names"]["en"]} as subdivision name (locale: en)" do
+              city_db.get(address)["subdivisions"][index]["names"]["en"].as_s.should eq(subdivision["names"]["en"].as_s)
+              city_db.get(address)[:subdivisions][index][:names][:en].as_s.should eq(subdivision["names"]["en"].as_s)
+            end
+
+            it "returns #{subdivision["iso_code"]} as ISO subdivision code" do
+              city_db.get(address)["subdivisions"][index]["iso_code"].as_s.should eq(subdivision["iso_code"])
+              city_db.get(address)[:subdivisions][index][:iso_code].as_s.should eq(subdivision["iso_code"])
+            end
+          end
+        end
       end
     end
   end

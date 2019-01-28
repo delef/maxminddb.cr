@@ -5,27 +5,32 @@ require "benchmark"
 module MaxMindDB
   struct Metadata
     getter ip_version : Int32, node_count : Int32, record_size : Int32,
-           build_time : Time, database_type : String, languages : Array(String),
-           description : Hash(String, String), node_byte_size : Int32,
-           search_tree_size : Int32, record_byte_size : Int32, tree_depth : Int32,
-           version : String
+      build_time : Time, database_type : String, languages : Array(String),
+      description : Hash(String, String), node_byte_size : Int32,
+      search_tree_size : Int32, record_byte_size : Int32, tree_depth : Int32,
+      version : String
 
     METADATA_START_MARKER = "\xAB\xCD\xEFMaxMind.com".to_slice
 
     def initialize(buffer : Bytes)
       offset = find_start(buffer)
+
+      if offset.zero?
+        raise InvalidDatabaseException.new("Can't parse binary database")
+      end
+
       metadata = Decoder.new(buffer, offset).decode(offset).to_any
 
       if metadata.empty?
-        raise InvalidDatabaseException.new("Cannot parse binary database (metadata)")
+        raise InvalidDatabaseException.new("Can't parse binary database")
       end
 
       unless [24, 28, 32].includes?(metadata["record_size"].as_i)
         raise InvalidDatabaseException.new("Unsupported record size")
       end
 
-      @ip_version  = metadata["ip_version"].as_i
-      @node_count  = metadata["node_count"].as_i
+      @ip_version = metadata["ip_version"].as_i
+      @node_count = metadata["node_count"].as_i
       @record_size = metadata["record_size"].as_i
 
       @build_time = Time.unix(metadata["build_epoch"].as_i)
@@ -40,17 +45,17 @@ module MaxMindDB
 
       @version = [
         metadata["binary_format_major_version"].as_i,
-        metadata["binary_format_minor_version"].as_i
+        metadata["binary_format_minor_version"].as_i,
       ].join('.')
     end
 
     private def find_start(buffer : Bytes) : Int32
       offset = buffer.size - 1
-      msize  = METADATA_START_MARKER.size - 1
-      found  = 0
+      msize = METADATA_START_MARKER.size - 1
+      found = 0
 
       loop do
-        break if found > msize || offset == 0
+        break if found > msize || offset.zero?
 
         offset -= 1
 

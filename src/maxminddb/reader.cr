@@ -21,7 +21,7 @@ module MaxMindDB
 
     def get(address : IPAddress)
       pointer = find_address_in_tree(address.data)
-      
+
       if pointer > 0
         resolve_data_pointer(pointer)
       else
@@ -32,7 +32,7 @@ module MaxMindDB
     private def find_address_in_tree(raw_address : Bytes) : Int32
       start_node = start_node(raw_address.size)
       node_number = start_node
-      
+
       (@metadata.tree_depth - start_node).times.each do |i|
         break if node_number >= @metadata.node_count
 
@@ -76,8 +76,8 @@ module MaxMindDB
         @decoder.decode_int(base_offset + index * 4, 4)
       else
         raise InvalidDatabaseException.new(
-                "Unknown record size: #{@metadata.record_byte_size}"
-              )
+          "Unknown record size: #{@metadata.record_byte_size}"
+        )
       end
     end
 
@@ -86,9 +86,9 @@ module MaxMindDB
 
       if resolved > @buffer.size
         raise InvalidDatabaseException.new(
-                "The MaxMind DB file's search tree is corrupt: " +
-                "contains pointer larger than the database."
-              )
+          "The MaxMind DB file's search tree is corrupt: " +
+          "contains pointer larger than the database."
+        )
       end
 
       @decoder.decode(resolved).to_any

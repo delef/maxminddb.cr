@@ -86,13 +86,13 @@ describe MaxMindDB::GeoIP2 do
 
   context "test ips" do
     [
-      {"81.2.69.144",   "GB"},
+      {"81.2.69.144", "GB"},
       {"216.160.83.56", "US"},
       {"89.160.20.112", "SE"},
       {"89.160.20.128", "SE"},
-      {"67.43.156.0",   "BT"},
+      {"67.43.156.0", "BT"},
       {"202.196.224.0", "PH"},
-      {"175.16.199.0",  "CN"},
+      {"175.16.199.0", "CN"},
     ].each do |ip, iso|
       it "returns a MaxMindDB::Format::GeoIP2::Root" do
         city_db.get(ip).should be_a(MaxMindDB::Format::GeoIP2::Root)

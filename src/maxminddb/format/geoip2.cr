@@ -33,7 +33,7 @@ module MaxMindDB::Format::GeoIP2
       Subdivision        => {geoname_id: Int32, names: Hash, iso_code: String},
       Traits             => {is_anonymous_proxy: Bool, is_satellite_provider: Bool},
       Location           => {accuracy_radius: Int32, latitude: Float64, longitude: Float64,
-                             metro_code: Int32, time_zone: String},
+                   metro_code: Int32, time_zone: String},
     }
     TYPE_MAP = {
       Int32   => :as_i,

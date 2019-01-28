@@ -39,9 +39,9 @@ module MaxMindDB
     def decode(offset : Int32) : Node
       if offset >= @buffer.size
         raise InvalidDatabaseException.new(
-                "The MaxMind DB file's data section contains bad data: " +
-                "pointer larger than the database."
-              )
+          "The MaxMind DB file's data section contains bad data: " +
+          "pointer larger than the database."
+        )
       end
 
       ctrl_byte = @buffer[offset].to_i32
@@ -52,7 +52,7 @@ module MaxMindDB
         pointer = decode_pointer(ctrl_byte, offset)
         target_offset = pointer.value.as(Int32)
         node = @cache.fetch(target_offset) { |offset| decode(offset) }
-        
+
         return Node.new(pointer.offset, node.value)
       end
 
@@ -62,10 +62,10 @@ module MaxMindDB
 
         if type_number < 8
           raise InvalidDatabaseException.new(
-                  "Something went horribly wrong in the decoder. " +
-                  "An extended type resolved to a type number < 8" +
-                  " (#{type_number})."
-                )
+            "Something went horribly wrong in the decoder. " +
+            "An extended type resolved to a type number < 8" +
+            " (#{type_number})."
+          )
         end
 
         data_type = DataType.new(type_number)
@@ -153,7 +153,7 @@ module MaxMindDB
     private def decode_int32(offset : Int32, size : Int32) : Node
       Node.new(offset + size, decode_int(offset, size))
     end
-    
+
     private def decode_array(offset : Int32, size : Int32) : Node
       value = [] of Any
 
