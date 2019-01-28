@@ -22,7 +22,7 @@ dependencies:
 require "maxminddb"
 
 mmdb = MaxMindDB::GeoIP2.new("#{__DIR__}/../data/GeoLite2-City.mmdb")
-result = mmdb.lookup("1.1.1.1")
+result = mmdb.get("1.1.1.1")
 
 result.city.geoname_id # => 2151718
 result.city.name # => "Research"
@@ -68,7 +68,7 @@ result.subdivisions[0].names # => {"en" => "Victoria", "pt-BR" => "Vitória", "r
 require "maxminddb"
 
 mmdb = MaxMindDB.new("#{__DIR__}/../data/GeoLite2-City.mmdb")
-result = mmdb.lookup("1.1.1.1")
+result = mmdb.get("1.1.1.1")
 
 result["city"]["geoname_id"].as_i # => 2151718
 result["city"]["names"]["en"].as_s # => "Research"
