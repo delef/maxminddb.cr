@@ -24,7 +24,7 @@ def db_path(name : String)
 end
 
 def source_path(name : String)
-  path = "spec/source/#{name}.json"
+  path = "spec/sources/#{name}.json"
 
   unless File.exists?(path)
     raise "Invalid `#{path}`. No such file or directory."
