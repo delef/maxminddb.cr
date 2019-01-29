@@ -36,12 +36,16 @@ module MaxMindDB
   end
 
   class GeoIP2 < Database
+    def self.open(db_path : String)
+      new(db_path)
+    end
+
     def get(query : String | Int)
       Format::GeoIP2.new(super(query))
     end
   end
 
-  def self.new(db_path : String)
+  def self.open(db_path : String)
     Database.new(db_path)
   end
 end

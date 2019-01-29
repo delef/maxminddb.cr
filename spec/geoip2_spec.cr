@@ -1,7 +1,7 @@
 require "./spec_helper"
 
 describe MaxMindDB::GeoIP2 do
-  city_db = MaxMindDB::GeoIP2.new(db_path("GeoIP2-City-Test"))
+  city_db = MaxMindDB::GeoIP2.open(db_path("GeoIP2-City-Test"))
 
   context "for the ip 81.2.69.142" do
     ip = "81.2.69.142"

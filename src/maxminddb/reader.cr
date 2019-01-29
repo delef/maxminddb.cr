@@ -20,7 +20,7 @@ module MaxMindDB
     end
 
     def get(address : IPAddress)
-      pointer = find_address_in_tree(address.data)
+      pointer = find_address_in_tree(address)
 
       if pointer > 0
         resolve_data_pointer(pointer)
@@ -29,8 +29,9 @@ module MaxMindDB
       end
     end
 
-    private def find_address_in_tree(raw_address : Bytes) : Int32
-      start_node = start_node(raw_address.size)
+    private def find_address_in_tree(address : IPAddress) : Int32
+      raw_address = address.data
+      start_node  = find_start_node(raw_address.size)
       node_number = start_node
 
       (@metadata.tree_depth - start_node).times.each do |i|
@@ -51,7 +52,7 @@ module MaxMindDB
       end
     end
 
-    private def start_node(address_size)
+    private def find_start_node(address_size)
       @metadata.ip_version == 6 && address_size == 4 ? 128 - 32 : 0
     end
 

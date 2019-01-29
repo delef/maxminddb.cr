@@ -5,10 +5,10 @@ require "benchmark"
 module MaxMindDB
   struct Metadata
     getter ip_version : Int32, node_count : Int32, record_size : Int32,
-      build_time : Time, database_type : String, languages : Array(String),
-      description : Hash(String, String), node_byte_size : Int32,
-      search_tree_size : Int32, record_byte_size : Int32, tree_depth : Int32,
-      version : String
+           build_time : Time, database_type : String, languages : Array(String),
+           description : Hash(String, String), node_byte_size : Int32,
+           search_tree_size : Int32, record_byte_size : Int32, tree_depth : Int32,
+           version : String
 
     METADATA_START_MARKER = "\xAB\xCD\xEFMaxMind.com".to_slice
 

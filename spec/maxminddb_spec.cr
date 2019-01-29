@@ -1,7 +1,7 @@
 require "./spec_helper"
 
 describe MaxMindDB do
-  city_db = MaxMindDB.new(db_path("GeoIP2-City-Test"))
+  city_db = MaxMindDB.open(db_path("GeoIP2-City-Test"))
   source_data = JSON.parse(File.read(source_path("GeoIP2-City-Test"))).as_a
 
   source_data.each do |part|

@@ -21,7 +21,7 @@ dependencies:
 ```crystal
 require "maxminddb"
 
-mmdb = MaxMindDB::GeoIP2.new("#{__DIR__}/../data/GeoLite2-City.mmdb")
+mmdb = MaxMindDB::GeoIP2.open("#{__DIR__}/../data/GeoLite2-City.mmdb")
 result = mmdb.get("1.1.1.1")
 
 result.city.geoname_id # => 2151718
@@ -67,7 +67,7 @@ result.subdivisions[0].names # => {"en" => "Victoria", "pt-BR" => "Vitória", "r
 ```crystal
 require "maxminddb"
 
-mmdb = MaxMindDB.new("#{__DIR__}/../data/GeoLite2-City.mmdb")
+mmdb = MaxMindDB.open("#{__DIR__}/../data/GeoLite2-City.mmdb")
 result = mmdb.get("1.1.1.1")
 
 result["city"]["geoname_id"].as_i # => 2151718
