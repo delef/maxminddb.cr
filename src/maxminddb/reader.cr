@@ -5,7 +5,7 @@ module MaxMindDB
   class Reader
     getter metadata
 
-    DATA_SEPARATOR_SIZE = 16
+    private DATA_SEPARATOR_SIZE = 16
 
     def initialize(db_path : String)
       unless File.exists?(db_path)
@@ -31,7 +31,7 @@ module MaxMindDB
 
     private def find_address_in_tree(address : IPAddress) : Int32
       raw_address = address.data
-      start_node  = find_start_node(raw_address.size)
+      start_node = find_start_node(raw_address.size)
       node_number = start_node
 
       (@metadata.tree_depth - start_node).times.each do |i|

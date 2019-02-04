@@ -3,6 +3,10 @@ require "./cache"
 
 module MaxMindDB
   class Decoder
+    private CACHE_MAX_SIZE        = 6000
+    private SIZE_BASE_VALUES      = [0, 29, 285, 65821]
+    private POINTER_VALUE_OFFSETS = [0, 0, 1 << 11, (1 << 19) + ((1) << 11), 0]
+
     enum DataType
       Extended,
       Pointer,
@@ -27,10 +31,6 @@ module MaxMindDB
         Any.new(value)
       end
     end
-
-    CACHE_MAX_SIZE        = 6000
-    SIZE_BASE_VALUES      = [0, 29, 285, 65821]
-    POINTER_VALUE_OFFSETS = [0, 0, 1 << 11, (1 << 19) + ((1) << 11), 0]
 
     def initialize(@buffer : Bytes, @base_offset : Int32, cache_max_size : Int32? = nil)
       @cache = Cache(Int32, Node).new(cache_max_size || CACHE_MAX_SIZE)
@@ -57,17 +57,7 @@ module MaxMindDB
       end
 
       if data_type.extended?
-        type_number = 7 + @buffer[offset]
-        offset += 1
-
-        if type_number < 8
-          raise InvalidDatabaseException.new(
-            "Something went horribly wrong in the decoder. " +
-            "An extended type resolved to a type number < 8" +
-            " (#{type_number})."
-          )
-        end
-
+        offset, type_number = read_extended(offset)
         data_type = DataType.new(type_number)
       end
 
@@ -108,7 +98,7 @@ module MaxMindDB
       end
     end
 
-    private def size_from_ctrl_byte(ctrl_byte : Int32, offset : Int32) : Tuple
+    private def size_from_ctrl_byte(ctrl_byte : Int32, offset : Int32) : Tuple(Int32, Int32)
       size = ctrl_byte & 0x1f
 
       if size >= 29
@@ -119,6 +109,21 @@ module MaxMindDB
       end
 
       {offset, size}
+    end
+
+    private def read_extended(offset : Int32) : Tuple(Int32, Int32)
+      type_number = 7 + @buffer[offset]
+      offset += 1
+
+      if type_number < 8
+        raise InvalidDatabaseException.new(
+          "Something went horribly wrong in the decoder. " +
+          "An extended type resolved to a type number < 8" +
+          " (#{type_number})."
+        )
+      end
+
+      {offset, type_number}
     end
 
     # Pointers are a special case, we don't read the next 'size' bytes, we

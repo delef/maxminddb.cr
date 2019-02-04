@@ -4,34 +4,28 @@ require "benchmark"
 
 module MaxMindDB
   struct Metadata
+    private METADATA_START_MARKER = "\xAB\xCD\xEFMaxMind.com".to_slice
+
     getter ip_version : Int32, node_count : Int32, record_size : Int32,
            build_time : Time, database_type : String, languages : Array(String),
            description : Hash(String, String), node_byte_size : Int32,
-           search_tree_size : Int32, record_byte_size : Int32, tree_depth : Int32,
-           version : String
-
-    METADATA_START_MARKER = "\xAB\xCD\xEFMaxMind.com".to_slice
+           search_tree_size : Int32, record_byte_size : Int32,
+           tree_depth : Int32, version : String
 
     def initialize(buffer : Bytes)
       offset = find_start(buffer)
-
-      if offset.zero?
-        raise InvalidDatabaseException.new("Can't parse binary database")
-      end
+      raise InvalidDatabaseException.new("Can't parse binary database") if offset.zero?
 
       metadata = Decoder.new(buffer, offset).decode(offset).to_any
-
-      if metadata.empty?
-        raise InvalidDatabaseException.new("Can't parse binary database")
-      end
-
-      unless [24, 28, 32].includes?(metadata["record_size"].as_i)
-        raise InvalidDatabaseException.new("Unsupported record size")
-      end
+      raise InvalidDatabaseException.new("Can't parse binary database") if metadata.empty?
 
       @ip_version = metadata["ip_version"].as_i
       @node_count = metadata["node_count"].as_i
       @record_size = metadata["record_size"].as_i
+
+      unless [24, 28, 32].includes?(@record_size)
+        raise InvalidDatabaseException.new("Unsupported record size")
+      end
 
       @build_time = Time.unix(metadata["build_epoch"].as_i)
       @database_type = metadata["database_type"].as_s
