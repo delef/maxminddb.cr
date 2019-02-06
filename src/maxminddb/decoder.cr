@@ -3,11 +3,11 @@ require "./cache"
 
 module MaxMindDB
   class Decoder
-    private CACHE_MAX_SIZE        = 6000
-    private SIZE_BASE_VALUES      = [0, 29, 285, 65821]
+    private CACHE_MAX_SIZE        = 6_000
+    private SIZE_BASE_VALUES      = [0, 29, 285, 65_821]
     private POINTER_VALUE_OFFSETS = [0, 0, 1 << 11, (1 << 19) + ((1) << 11), 0]
 
-    enum DataType
+    private enum DataType
       Extended,
       Pointer,
       Utf8,
@@ -26,9 +26,14 @@ module MaxMindDB
       Float
     end
 
-    record Node, offset : Int32, value : Any::Type do
+    private struct Node
+      getter offset, value 
+
+      def initialize(@offset : Int32, @value : Any::Type)
+      end
+
       def to_any
-        Any.new(value)
+        Any.new(@value)
       end
     end
 
@@ -69,7 +74,7 @@ module MaxMindDB
       @buffer[offset, size].reduce(base) { |r, v| (r << 8) | v.to_i32 }
     end
 
-    private def decode_by_type(data_type : Enum, offset : Int32, size : Int32) : Node
+    private def decode_by_type(data_type : DataType, offset : Int32, size : Int32) : Node
       case data_type
       when .utf8?
         decode_string(offset, size)
@@ -94,7 +99,7 @@ module MaxMindDB
       when .float?
         decode_float(offset, size)
       else
-        raise InvalidDatabaseException.new("Unknown or unexpected type: #{data_type}")
+        raise InvalidDatabaseException.new("Unknown or unexpected type: #{data_type.to_i}")
       end
     end
 

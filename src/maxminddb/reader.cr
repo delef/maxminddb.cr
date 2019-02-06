@@ -3,9 +3,9 @@ require "./metadata"
 
 module MaxMindDB
   class Reader
-    getter metadata
-
     private DATA_SEPARATOR_SIZE = 16
+
+    getter metadata
 
     def initialize(db_path : String)
       unless File.exists?(db_path)
@@ -25,7 +25,7 @@ module MaxMindDB
       if pointer > 0
         resolve_data_pointer(pointer)
       else
-        empty_result
+        Any.new({} of String => Any)
       end
     end
 
@@ -93,10 +93,6 @@ module MaxMindDB
       end
 
       @decoder.decode(resolved).to_any
-    end
-
-    private def empty_result
-      Decoder::Node.new(0, {} of String => Any).to_any
     end
   end
 end
