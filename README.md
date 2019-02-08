@@ -4,7 +4,8 @@
 [![Releases](https://img.shields.io/github/release/delef/maxminddb.cr.svg?style=flat-square)](https://github.com/delef/maxminddb.cr/releases)
 
 Pure Crystal [MaxMind DB](http://maxmind.github.io/MaxMind-DB/) reader, which doesn't require [libmaxminddb](https://github.com/maxmind/libmaxminddb).
-**If you work with GeoIP2, please use: https://github.com/delef/geoip2.cr**
+
+**_If you work with GeoIP2, please use: https://github.com/delef/geoip2.cr_**
 
 ## Installation
 
