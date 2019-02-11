@@ -27,7 +27,7 @@ module MaxMindDB
     end
 
     private struct Node
-      getter offset, value 
+      getter offset, value
 
       def initialize(@offset : Int32, @value : Any::Type)
       end
