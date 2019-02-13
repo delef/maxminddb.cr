@@ -182,16 +182,6 @@ struct Value
   end
 end
 
-struct Slice(T)
-  def to_json
-
-  end
-
-  def to_json(io : IO)
-
-  end
-end
-
 class Reference
   def ==(other : MaxMindDB::Any)
     self == other.raw
