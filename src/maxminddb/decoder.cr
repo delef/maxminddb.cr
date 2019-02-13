@@ -153,7 +153,8 @@ module MaxMindDB
     end
 
     private def decode_bytes(offset : Int32, size : Int32) : Node
-      Node.new(offset + size, @buffer[offset, size])
+      value = @buffer[offset, size].to_a.map { |e| Any.new(e.to_i) }
+      Node.new(offset + size, value)
     end
 
     private def decode_uint(offset : Int32, size : Int32) : Node

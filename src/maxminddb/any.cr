@@ -2,9 +2,8 @@ require "json"
 
 module MaxMindDB
   struct Any
-    alias Type = Nil | Bool | Bytes | String | Int32 | UInt16 |
-                 UInt32 | UInt64 | UInt128 | Float32 | Float64 |
-                 Hash(String, Any) | Array(Any)
+    alias Type = Nil | Bool | String | Int32 | UInt16 | UInt32 | UInt64 |
+                 UInt128 | Float32 | Float64 | Hash(String, Any) | Array(Any)
 
     getter raw : Type
     def_hash raw
@@ -180,6 +179,16 @@ end
 struct Value
   def ==(other : MaxMindDB::Any)
     self == other.raw
+  end
+end
+
+struct Slice(T)
+  def to_json
+
+  end
+
+  def to_json(io : IO)
+
   end
 end
 
