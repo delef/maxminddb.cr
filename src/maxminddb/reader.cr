@@ -1,3 +1,4 @@
+require "ipaddress"
 require "./decoder"
 require "./metadata"
 
@@ -12,11 +13,15 @@ module MaxMindDB
         raise InvalidDatabaseException.new("Database not found")
       end
 
-      @buffer = Bytes.new(File.size(db_path))
-      File.open(db_path, "rb") { |file| file.read_fully(@buffer) }
+      @bytes = Bytes.new(File.size(db_path))
+      File.open(db_path, "rb") { |file| file.read_fully(@bytes) }
 
-      @metadata = Metadata.new(@buffer)
-      @decoder = Decoder.new(@buffer, @metadata.search_tree_size + DATA_SEPARATOR_SIZE)
+      @metadata = Metadata.new(@bytes)
+      @decoder = Decoder.new(@bytes, @metadata.search_tree_size + DATA_SEPARATOR_SIZE)
+    end
+
+    def get(address : String | Int)
+      get(IPAddress.parse(address))
     end
 
     def get(address : IPAddress)
@@ -27,6 +32,10 @@ module MaxMindDB
       else
         Any.new({} of String => Any)
       end
+    end
+
+    def inspect(io : IO)
+      @metadata.inspect(io)
     end
 
     private def find_address_in_tree(address : IPAddress) : Int32
@@ -63,7 +72,7 @@ module MaxMindDB
       when 24
         @decoder.decode_int(base_offset + index * 3, 3)
       when 28
-        middle_byte = @buffer[base_offset + 3].to_i32
+        middle_byte = @bytes[base_offset + 3].to_i32
 
         middle =
           if index.zero?
@@ -85,7 +94,7 @@ module MaxMindDB
     private def resolve_data_pointer(pointer : Int)
       resolved = pointer - @metadata.node_count + @metadata.search_tree_size
 
-      if resolved > @buffer.size
+      if resolved > @bytes.size
         raise InvalidDatabaseException.new(
           "The MaxMind DB file's search tree is corrupt: " +
           "contains pointer larger than the database."

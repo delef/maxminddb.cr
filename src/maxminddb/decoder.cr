@@ -37,19 +37,19 @@ module MaxMindDB
       end
     end
 
-    def initialize(@buffer : Bytes, @base_offset : Int32, cache_max_size : Int32? = nil)
+    def initialize(@bytes : Bytes, @base_offset : Int32, cache_max_size : Int32? = nil)
       @cache = Cache(Int32, Node).new(cache_max_size || CACHE_MAX_SIZE)
     end
 
     def decode(offset : Int32) : Node
-      if offset >= @buffer.size
+      if offset >= @bytes.size
         raise InvalidDatabaseException.new(
           "The MaxMind DB file's data section contains bad data: " +
           "pointer larger than the database."
         )
       end
 
-      ctrl_byte = @buffer[offset].to_i32
+      ctrl_byte = @bytes[offset].to_i32
       data_type = DataType.new(ctrl_byte >> 5)
       offset += 1
 
@@ -71,7 +71,7 @@ module MaxMindDB
     end
 
     def decode_int(offset : Int32, size : Int32, base : Int32 = 0) : Int32
-      @buffer[offset, size].reduce(base) { |r, v| (r << 8) | v.to_i32 }
+      @bytes[offset, size].reduce(base) { |r, v| (r << 8) | v.to_i32 }
     end
 
     private def decode_by_type(data_type : DataType, offset : Int32, size : Int32) : Node
@@ -117,7 +117,7 @@ module MaxMindDB
     end
 
     private def read_extended(offset : Int32) : Tuple(Int32, Int32)
-      type_number = 7 + @buffer[offset]
+      type_number = 7 + @bytes[offset]
       offset += 1
 
       if type_number < 8
@@ -143,17 +143,17 @@ module MaxMindDB
     end
 
     private def decode_string(offset : Int32, size : Int32) : Node
-      Node.new(offset + size, String.new(@buffer[offset, size]))
+      Node.new(offset + size, String.new(@bytes[offset, size]))
     end
 
     private def decode_float(offset : Int, size : Int32) : Node
-      io = IO::Memory.new(@buffer[offset, size])
+      io = IO::Memory.new(@bytes[offset, size])
       value = io.read_bytes(Float64, IO::ByteFormat::BigEndian)
       Node.new(offset + size, value)
     end
 
     private def decode_bytes(offset : Int32, size : Int32) : Node
-      value = @buffer[offset, size].to_a.map { |e| Any.new(e.to_i) }
+      value = @bytes[offset, size].to_a.map { |e| Any.new(e.to_i) }
       Node.new(offset + size, value)
     end
 

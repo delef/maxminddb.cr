@@ -1,4 +1,4 @@
-require "./maxminddb/database"
+require "./maxminddb/reader"
 require "./maxminddb/version"
 
 module MaxMindDB
@@ -6,6 +6,6 @@ module MaxMindDB
   end
 
   def self.open(db_path : String)
-    Database.new(db_path)
+    Reader.new(db_path)
   end
 end

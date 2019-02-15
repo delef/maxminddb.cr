@@ -44,23 +44,15 @@ module MaxMindDB
     end
 
     private def find_start(buffer : Bytes) : Int32
-      offset = buffer.size - 1
-      msize = METADATA_START_MARKER.size - 1
-      found = 0
+      marker_size  = METADATA_START_MARKER.size
+      start_offset = buffer.size - marker_size
+      found_offset = 0
 
-      loop do
-        break if found > msize || offset.zero?
-
-        offset -= 1
-
-        if buffer[offset] == METADATA_START_MARKER[msize - found]
-          found += 1
-        else
-          found = 0
-        end
+      (0...start_offset).reverse_each do |i|
+        found_offset = i if buffer[i, marker_size] == METADATA_START_MARKER
       end
 
-      offset + found
+      found_offset + marker_size
     end
   end
 end
