@@ -12,12 +12,18 @@ module MaxMindDB
            search_tree_size : Int32, record_byte_size : Int32,
            tree_depth : Int32, version : String
 
-    def initialize(buffer : Bytes)
-      offset = find_start(buffer)
-      raise InvalidDatabaseException.new("Can't parse binary database") if offset.zero?
+    def initialize(bytes : Bytes)
+      start_offset = find_start(bytes)
 
-      metadata = Decoder.new(buffer, offset).decode(offset).to_any
-      raise InvalidDatabaseException.new("Can't parse binary database") if metadata.empty?
+      if start_offset.zero?
+        raise InvalidDatabaseException.new("Can't parse binary database")
+      end
+
+      metadata = Decoder.new(bytes, start_offset).decode(start_offset).to_any
+
+      if metadata.empty?
+        raise InvalidDatabaseException.new("Metadata is empty")
+      end
 
       @ip_version = metadata["ip_version"].as_i
       @node_count = metadata["node_count"].as_i
@@ -43,16 +49,17 @@ module MaxMindDB
       ].join('.')
     end
 
-    private def find_start(buffer : Bytes) : Int32
-      marker_size  = METADATA_START_MARKER.size
-      start_offset = buffer.size - marker_size
-      found_offset = 0
+    private def find_start(bytes : Bytes) : Int32
+      marker_size = METADATA_START_MARKER.size
+      start_offset = 0
 
-      (0...start_offset).reverse_each do |i|
-        found_offset = i if buffer[i, marker_size] == METADATA_START_MARKER
+      (marker_size...bytes.size).reverse_each do |i|
+        if bytes[i - marker_size, marker_size] == METADATA_START_MARKER
+          start_offset = i
+        end
       end
 
-      found_offset + marker_size
+      start_offset
     end
   end
 end
