@@ -27,9 +27,9 @@ module MaxMindDB
     end
 
     private struct Node
-      getter offset, value
+      getter value
 
-      def initialize(@offset : Int32, @value : Any::Type)
+      def initialize(@value : Any::Type)
       end
 
       def to_any
@@ -37,88 +37,96 @@ module MaxMindDB
       end
     end
 
-    def initialize(@bytes : Bytes, @base_offset : Int32, cache_max_size : Int32? = nil)
+    def initialize(
+      @buffer : Buffer,
+      @pointer_base : Int32,
+      cache_max_size : Int32? = nil,
+      @pointer_test : Bool = false
+    )
       @cache = Cache(Int32, Node).new(cache_max_size || CACHE_MAX_SIZE)
     end
 
     def decode(offset : Int32) : Node
-      if offset >= @bytes.size
+      if offset >= @buffer.size
         raise InvalidDatabaseException.new(
           "The MaxMind DB file's data section contains bad data: " +
           "pointer larger than the database."
         )
       end
 
-      ctrl_byte = @bytes[offset].to_i32
+      @buffer.position = offset
+      decode
+    end
+
+    def decode : Node
+      ctrl_byte = @buffer.read_byte.to_i32
       data_type = DataType.new(ctrl_byte >> 5)
-      offset += 1
+      data_type = read_extended if data_type.extended?
 
-      if data_type.pointer?
-        pointer = decode_pointer(ctrl_byte, offset)
-        target_offset = pointer.value.as(Int32)
-        node = @cache.fetch(target_offset) { |offset| decode(offset) }
-
-        return Node.new(pointer.offset, node.value)
-      end
-
-      if data_type.extended?
-        offset, type_number = read_extended(offset)
-        data_type = DataType.new(type_number)
-      end
-
-      offset, size = size_from_ctrl_byte(ctrl_byte, offset)
-      decode_by_type(data_type, offset, size)
+      size = size_from_ctrl_byte(ctrl_byte, data_type)
+      decode_by_type(data_type, size)
     end
 
-    def decode_int(offset : Int32, size : Int32, base : Int32 = 0) : Int32
-      @bytes[offset, size].reduce(base) { |r, v| (r << 8) | v.to_i32 }
-    end
-
-    private def decode_by_type(data_type : DataType, offset : Int32, size : Int32) : Node
+    # Each output data field has an associated type,
+    # and that type is encoded as a number that begins the data field.
+    # Some types are variable length.
+    #
+    # In those cases, the type indicator is also followed by a length.
+    # The data payload always comes at the end of the field.
+    private def decode_by_type(data_type : DataType, size : Int32) : Node
       case data_type
+      when .pointer?
+        decode_pointer(size)
       when .utf8?
-        decode_string(offset, size)
+        decode_string(size)
       when .double?
-        decode_float(offset, size)
+        decode_double(size)
       when .bytes?
-        decode_bytes(offset, size)
-      when .uint16?, .uint32?, .uint64?, .uint128?
-        decode_uint(offset, size)
+        decode_bytes(size)
+      when .uint16?
+        decode_uint16(size)
+      when .uint32?
+        decode_uint32(size)
+      when .uint64?
+        decode_uint64(size)
+      when .uint128?
+        decode_uint128(size)
       when .map?
-        decode_map(offset, size)
+        decode_map(size)
       when .int32?
-        decode_int32(offset, size)
+        decode_int32(size)
       when .array?
-        decode_array(offset, size)
+        decode_array(size)
       when .container?
         raise InvalidDatabaseException.new("Сontainers are not currently supported")
       when .end_marker?
-        Node.new(offset, nil)
+        Node.new nil
       when .boolean?
-        Node.new(offset, !size.zero?)
+        Node.new !size.zero?
       when .float?
-        decode_float(offset, size)
+        decode_float(size)
       else
         raise InvalidDatabaseException.new("Unknown or unexpected type: #{data_type.to_i}")
       end
     end
 
-    private def size_from_ctrl_byte(ctrl_byte : Int32, offset : Int32) : Tuple(Int32, Int32)
+    # Control byte provides information about
+    # the field’s data type and payload size.
+    private def size_from_ctrl_byte(ctrl_byte : Int32, data_type : DataType) : Int32
       size = ctrl_byte & 0x1f
 
-      if size >= 29
-        bytes_size = size - 29 + 1
-        int = decode_int(offset, bytes_size)
-        offset += bytes_size
-        size = SIZE_BASE_VALUES[bytes_size] + int
-      end
-
-      {offset, size}
+      return size if data_type.pointer? || size < 29
+        
+      bytes_size = size - 28
+      SIZE_BASE_VALUES[bytes_size] + decode_int(bytes_size)
     end
 
-    private def read_extended(offset : Int32) : Tuple(Int32, Int32)
-      type_number = 7 + @bytes[offset]
-      offset += 1
+    # With an extended type, the type number in the second byte is
+    # the number minus 7.
+    # In other words, an array (type 11) will be stored with a 0
+    # for the type in the first byte and a 4 in the second.
+    private def read_extended : DataType
+      type_number = 7 + @buffer.read_byte
 
       if type_number < 8
         raise InvalidDatabaseException.new(
@@ -128,68 +136,110 @@ module MaxMindDB
         )
       end
 
-      {offset, type_number}
+      DataType.new(type_number)
     end
 
     # Pointers are a special case, we don't read the next 'size' bytes, we
     # use the size to determine the length of the pointer and then follow it.
-    private def decode_pointer(ctrl_byte : Int32, offset : Int32) : Node
+    private def decode_pointer(ctrl_byte : Int32) : Node
       pointer_size = ((ctrl_byte >> 3) & 0x3) + 1
       base = pointer_size == 4 ? 0 : (ctrl_byte & 0x7)
-      packed = decode_int(offset, pointer_size, base)
-      pointer = packed + @base_offset + POINTER_VALUE_OFFSETS[pointer_size]
+      packed = decode_int(pointer_size, base)
+      pointer = @pointer_base + packed + POINTER_VALUE_OFFSETS[pointer_size]
 
-      Node.new(offset + pointer_size, pointer)
+      return Node.new(pointer) if @pointer_test
+
+      position = @buffer.position
+      node = @cache.fetch(pointer) { |offset| decode(offset) }
+      @buffer.position = position
+
+      node
     end
 
-    private def decode_string(offset : Int32, size : Int32) : Node
-      Node.new(offset + size, String.new(@bytes[offset, size]))
+    # A variable length byte sequence that contains valid utf8.
+    # If the length is zero then this is an empty string.
+    private def decode_string(size : Int32) : Node
+      Node.new String.new(@buffer.read(size))
     end
 
-    private def decode_float(offset : Int, size : Int32) : Node
-      io = IO::Memory.new(@bytes[offset, size])
-      value = io.read_bytes(Float64, IO::ByteFormat::BigEndian)
-      Node.new(offset + size, value)
+    # Decode integer without change @buffer position
+    # for external use
+    def decode_int(offset : Int32, size : Int32, base : Int) : Int
+      @buffer[offset, size].reduce(base) { |r, v| (r << 8) | v }
     end
 
-    private def decode_bytes(offset : Int32, size : Int32) : Node
-      value = @bytes[offset, size].to_a.map { |e| Any.new(e.to_i) }
-      Node.new(offset + size, value)
+    # Decode integer
+    private def decode_int(size : Int32, base : Int = 0) : Int
+      @buffer.read(size).reduce(base) { |r, v| (r << 8) | v }
     end
 
-    private def decode_uint(offset : Int32, size : Int32) : Node
-      Node.new(offset + size, decode_int(offset, size))
+    private def decode_uint16(size : Int32) : Node
+      Node.new decode_int(size, 0u16)
     end
 
-    private def decode_int32(offset : Int32, size : Int32) : Node
-      Node.new(offset + size, decode_int(offset, size))
+    private def decode_uint32(size : Int32) : Node
+      Node.new decode_int(size, 0u32)
     end
 
-    private def decode_array(offset : Int32, size : Int32) : Node
+    private def decode_uint64(size : Int32) : Node
+      Node.new decode_int(size, 0u64)
+    end
+
+    private def decode_uint128(size : Int32) : Node
+      Node.new decode_int(size, 0u128)
+    end
+
+    private def decode_int32(size : Int32) : Node
+      Node.new decode_int(size, 0)
+    end
+
+    private def decode_double(size : Int32) : Node
+      if size != 8
+        raise InvalidDatabaseException.new(
+          "The MaxMind DB file's data section contains bad data: " +
+          "invalid size of double."
+        )
+      end
+      
+      Node.new IO::ByteFormat::BigEndian.decode(Float64, @buffer.read(size))
+    end
+
+    private def decode_float(size : Int32) : Node
+      if size != 4        
+        raise InvalidDatabaseException.new(
+          "The MaxMind DB file's data section contains bad data: " +
+          "invalid size of float."
+        )
+      end
+
+      Node.new IO::ByteFormat::BigEndian.decode(Float32, @buffer.read(size))
+    end
+
+    private def decode_bytes(size : Int32) : Node
+      Node.new @buffer.read(size).to_a.map { |e| Any.new(e.to_i) }
+    end
+
+    private def decode_array(size : Int32) : Node
       value = [] of Any
 
       size.times.each do
-        node = decode(offset)
-        offset = node.offset
-
-        value << node.to_any
+        value << decode.to_any
       end
 
-      Node.new(offset, value)
+      Node.new value
     end
 
-    private def decode_map(offset : Int32, size : Int32) : Node
+    private def decode_map(size : Int32) : Node
       map = {} of String => Any
 
       size.times.each do
-        key_node = decode(offset)
-        val_node = decode(key_node.offset)
-        offset = val_node.offset
+        key = decode.value.as(String)
+        value = decode.to_any
 
-        map[key_node.value.as(String)] = val_node.to_any
+        map[key] = value
       end
 
-      Node.new(offset, map)
+      Node.new map
     end
   end
 end
