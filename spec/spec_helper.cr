@@ -2,9 +2,13 @@ require "spec"
 require "../src/maxminddb"
 
 def db_path(name : String)
-  "spec/data/test-data/#{name}.mmdb"
-end
+  path = "spec/data/test-data/"
 
-def source_path(name : String)
-  "spec/data/source-data/#{name}.json"
+  if name.includes?(".")
+    path += name
+  else
+    path += "#{name}.mmdb"
+  end
+
+  path
 end
