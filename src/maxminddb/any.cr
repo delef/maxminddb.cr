@@ -1,5 +1,3 @@
-require "json"
-
 module MaxMindDB
   struct Any
     alias Type = Nil | Bool | String | Int32 | UInt16 | UInt32 | UInt64 |
@@ -104,12 +102,12 @@ module MaxMindDB
       as_u64 if @raw.is_a?(UInt64)
     end
 
-    def as_u128 : BigInt
-      @raw.as(BigInt).to_big_i
+    def as_u128 : UInt128
+      @raw.as(UInt128).to_big_i
     end
 
-    def as_u128? : BigInt?
-      as_u128 if @raw.is_a?(BigInt)
+    def as_u128? : UInt128?
+      as_u128 if @raw.is_a?(UInt128)
     end
 
     def as_f : Float64
