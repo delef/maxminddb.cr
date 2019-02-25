@@ -128,7 +128,7 @@ module MaxMindDB
         @decoder.decode_int(base_offset + index * 4, 4, 0)
       else
         raise InvalidDatabaseException.new(
-          "Unknown record size: #{@metadata.record_byte_size}"
+          "Unknown record size: #{@metadata.record_size}"
         )
       end
     end
