@@ -68,7 +68,7 @@ module MaxMindDB
       end
 
       start_offset = marker_index + METADATA_START_MARKER.size
-      metadata = Decoder.new(buffer, start_offset).decode(start_offset).to_any
+      metadata = Decoder.new(buffer, start_offset).decode(start_offset).as_any
 
       if metadata.empty?
         raise InvalidDatabaseException.new("Metadata is empty")

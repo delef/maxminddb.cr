@@ -143,7 +143,7 @@ module MaxMindDB
         )
       end
 
-      @decoder.decode(offset).to_any
+      @decoder.decode(offset).as_any
     end
   end
 end

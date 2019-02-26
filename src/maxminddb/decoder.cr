@@ -32,7 +32,7 @@ module MaxMindDB
       def initialize(@value : Any::Type)
       end
 
-      def to_any
+      def as_any
         Any.new(@value)
       end
     end
@@ -162,8 +162,7 @@ module MaxMindDB
       Node.new String.new(@buffer.read(size))
     end
 
-    # Decode integer without change @buffer position
-    # for external use
+    # Decode integer for external use
     def decode_int(offset : Int32, size : Int32, base : Int) : Int
       @buffer[offset, size].reduce(base) { |r, v| (r << 8) | v }
     end
@@ -220,23 +219,14 @@ module MaxMindDB
     end
 
     private def decode_array(size : Int32) : Node
-      value = [] of Any
-
-      size.times.each do
-        value << decode.to_any
-      end
-
-      Node.new value
+      Node.new Array(Any).new(size) { decode.as_any }
     end
 
     private def decode_map(size : Int32) : Node
-      map = {} of String => Any
+      map = Hash(String, Any).new
 
       size.times.each do
-        key = decode.value.as(String)
-        value = decode.to_any
-
-        map[key] = value
+        map[decode.value.as(String)] = decode.as_any
       end
 
       Node.new map
