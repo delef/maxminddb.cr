@@ -8,21 +8,21 @@ module MaxMindDB
     private POINTER_VALUE_OFFSETS = [0, 0, 1 << 11, (1 << 19) + ((1) << 11), 0]
 
     private enum DataType
-      Extended,
-      Pointer,
-      Utf8,
-      Double,
-      Bytes,
-      Uint16,
-      Uint32,
-      Map,
-      Int32,
-      Uint64,
-      Uint128,
-      Array,
-      Container,
-      EndMarker,
-      Boolean,
+      Extended
+      Pointer
+      Utf8
+      Double
+      Bytes
+      Uint16
+      Uint32
+      Map
+      Int32
+      Uint64
+      Uint128
+      Array
+      Container
+      EndMarker
+      Boolean
       Float
     end
 
@@ -116,7 +116,7 @@ module MaxMindDB
       size = ctrl_byte & 0x1f
 
       return size if data_type.pointer? || size < 29
-        
+
       bytes_size = size - 28
       SIZE_BASE_VALUES[bytes_size] + decode_int(bytes_size)
     end
@@ -199,12 +199,12 @@ module MaxMindDB
           "invalid size of double."
         )
       end
-      
+
       Node.new IO::ByteFormat::BigEndian.decode(Float64, @buffer.read(size))
     end
 
     private def decode_float(size : Int32) : Node
-      if size != 4        
+      if size != 4
         raise InvalidDatabaseException.new(
           "The MaxMind DB file's data section contains bad data: " +
           "invalid size of float."
