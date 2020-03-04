@@ -1,24 +1,33 @@
+require "immutable"
 require "./any"
 
 module MaxMindDB
   struct Cache(K, V)
-    def initialize(@max_size : Int32)
-      @storage = {} of K => V
+    property capacity : Int32
+    property storage : Immutable::Map(K, V)
+
+    def initialize(@capacity : Int32)
+      @storage = Immutable::Map(K, V).new
     end
 
     def fetch(key : K, &block : K -> V) : V
-      value = @storage[key]?
+      value = storage[key]?
+      return value if value
 
-      unless value
-        value = yield(key)
-        @storage[key] = value unless full?
-      end
+      value = yield(key)
+
+      self.storage =
+        if full?
+          Immutable::Map(K, V).new.set(key, value)
+        else
+          storage.set(key, value)
+        end
 
       value
     end
 
     def full?
-      @storage.size >= @max_size
+      storage.size >= @capacity
     end
   end
 end
