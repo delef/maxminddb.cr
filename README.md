@@ -50,6 +50,7 @@ result["subdivisions"][0]["iso_code"].as_s # => "VIC"
 result["subdivisions"][0]["geoname_id"].as_i # => 2145234
 result["subdivisions"][0]["names"]["en"].as_s # => "Victoria"
 ```
+
 ## Links
 
  - MaxMind DB file format specification http://maxmind.github.io/MaxMind-DB/
@@ -66,4 +67,8 @@ result["subdivisions"][0]["names"]["en"].as_s # => "Victoria"
 
 ## Contributors
 
-- [delef](https://github.com/delef) - creator, maintainer
+|Name|Creator|Maintainer|Contributor|
+|:---:|:---:|:---:|:---:|
+|**[delef](https://github.com/delef)**|√|√||
+|**[jgillich](https://github.com/jgillich)**|||√|
+|**[636f7374](https://github.com/636f7374)**|||√|
