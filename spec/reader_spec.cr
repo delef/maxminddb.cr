@@ -77,7 +77,7 @@ describe MaxMindDB::Reader do
       reader = MaxMindDB::Reader.new(db_path("GeoIP2-City-Test-Broken-Double-Format"))
 
       message = "The MaxMind DB file's data section contains bad data: invalid size of double."
-      expect_raises MaxMindDB::InvalidDatabaseException, message do
+      expect_raises MaxMindDB::DatabaseError, message do
         reader.get("2001:220::")
       end
     end
@@ -85,14 +85,14 @@ describe MaxMindDB::Reader do
 
   it "should raises exception for missing database" do
     message = "Database not found"
-    expect_raises MaxMindDB::InvalidDatabaseException, message do
+    expect_raises MaxMindDB::DatabaseError, message do
       MaxMindDB::Reader.new("file-does-not-exist.mmdb")
     end
   end
 
   it "should raises exception for invalid database" do
     message = "Metadata section not found. Is this a valid MaxMind DB file?"
-    expect_raises MaxMindDB::InvalidDatabaseException, message do
+    expect_raises MaxMindDB::DatabaseError, message do
       MaxMindDB::Reader.new("README.md")
     end
   end

@@ -62,7 +62,7 @@ module MaxMindDB
       marker_index = buffer.rindex(METADATA_START_MARKER)
 
       if marker_index.nil?
-        raise InvalidDatabaseException.new(
+        raise DatabaseError.new(
           "Metadata section not found. Is this a valid MaxMind DB file?"
         )
       end
@@ -71,7 +71,7 @@ module MaxMindDB
       metadata = Decoder.new(buffer, start_offset).decode(start_offset).as_any
 
       if metadata.empty?
-        raise InvalidDatabaseException.new("Metadata is empty")
+        raise DatabaseError.new("Metadata is empty")
       end
 
       @node_count = metadata["node_count"].as_i
@@ -81,7 +81,7 @@ module MaxMindDB
       @ip_version = metadata["ip_version"].as_i
 
       unless [24, 28, 32].includes?(@record_size)
-        raise InvalidDatabaseException.new("Unsupported record size")
+        raise DatabaseError.new("Unsupported record size")
       end
 
       @database_type = metadata["database_type"].as_s

@@ -1,4 +1,4 @@
-require "ipaddress"
+require "./ip_address"
 require "./buffer"
 require "./decoder"
 require "./metadata"
@@ -13,7 +13,7 @@ module MaxMindDB
 
     def initialize(db_path : String, cache_max_size : Int32? = nil)
       unless File.exists?(db_path)
-        raise InvalidDatabaseException.new("Database not found")
+        raise DatabaseError.new("Database not found")
       end
 
       initialize(read_file(db_path), cache_max_size)
@@ -27,12 +27,13 @@ module MaxMindDB
       @decoder = Decoder.new(@buffer, pointer_base, cache_max_size)
     end
 
-    def get(address : String | Int)
-      get(IPAddress.parse(address))
+    def get(address : String | Int) : Any
+      get IPAddress.new(address)
     end
 
-    def get(address : IPAddress)
-      if address.is_a?(IPAddress::IPv6) && @metadata.ip_version == 4
+    def get(address : IPAddress) : Any
+      case {metadata.ip_version, address.family}
+      when {4_i32, Socket::Family::INET6}
         raise ArgumentError.new(
           "Error looking up '#{address.to_s}'. " +
           "You attempted to look up an IPv6 address in an IPv4-only database."
@@ -66,7 +67,8 @@ module MaxMindDB
     end
 
     private def find_address_in_tree(address : IPAddress) : Int32
-      raw_address = address.data
+      raise IPAddressError.new unless raw_address = address.to_bytes
+
       bit_size = raw_address.size * 8
       node_number = start_node(bit_size)
 
@@ -84,16 +86,14 @@ module MaxMindDB
       elsif node_number > @metadata.node_count
         node_number
       else
-        raise InvalidDatabaseException.new("Something bad happened")
+        raise DatabaseError.new("Something bad happened")
       end
     end
 
     private def start_node(bit_size) : Int32
-      unless @metadata.ip_version == 6 && bit_size == 32
+      if @metadata.ip_version != 6 || bit_size != 32
         return 0
-      end
-
-      if ipv4_start_node = @ipv4_start_node
+      elsif ipv4_start_node = @ipv4_start_node
         return ipv4_start_node
       end
 
@@ -127,9 +127,7 @@ module MaxMindDB
       when 32
         @decoder.decode_int(base_offset + index * 4, 4, 0)
       else
-        raise InvalidDatabaseException.new(
-          "Unknown record size: #{@metadata.record_size}"
-        )
+        raise DatabaseError.new "Unknown record size: #{@metadata.record_size}"
       end
     end
 
@@ -137,7 +135,7 @@ module MaxMindDB
       offset = pointer - @metadata.node_count + @metadata.search_tree_size
 
       if offset > @buffer.size
-        raise InvalidDatabaseException.new(
+        raise DatabaseError.new(
           "The MaxMind DB file's search tree is corrupt: " +
           "contains pointer larger than the database."
         )

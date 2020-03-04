@@ -48,7 +48,7 @@ module MaxMindDB
 
     def decode(offset : Int32) : Node
       if offset >= @buffer.size
-        raise InvalidDatabaseException.new(
+        raise DatabaseError.new(
           "The MaxMind DB file's data section contains bad data: " +
           "pointer larger than the database."
         )
@@ -98,7 +98,7 @@ module MaxMindDB
       when .array?
         decode_array(size)
       when .container?
-        raise InvalidDatabaseException.new("Сontainers are not currently supported")
+        raise DatabaseError.new("Сontainers are not currently supported")
       when .end_marker?
         Node.new nil
       when .boolean?
@@ -106,7 +106,7 @@ module MaxMindDB
       when .float?
         decode_float(size)
       else
-        raise InvalidDatabaseException.new("Unknown or unexpected type: #{data_type.to_i}")
+        raise DatabaseError.new("Unknown or unexpected type: #{data_type.to_i}")
       end
     end
 
@@ -129,7 +129,7 @@ module MaxMindDB
       type_number = 7 + @buffer.read_byte
 
       if type_number < 8
-        raise InvalidDatabaseException.new(
+        raise DatabaseError.new(
           "Something went horribly wrong in the decoder. " +
           "An extended type resolved to a type number < 8" +
           " (#{type_number})."
@@ -194,7 +194,7 @@ module MaxMindDB
 
     private def decode_double(size : Int32) : Node
       if size != 8
-        raise InvalidDatabaseException.new(
+        raise DatabaseError.new(
           "The MaxMind DB file's data section contains bad data: " +
           "invalid size of double."
         )
@@ -205,7 +205,7 @@ module MaxMindDB
 
     private def decode_float(size : Int32) : Node
       if size != 4
-        raise InvalidDatabaseException.new(
+        raise DatabaseError.new(
           "The MaxMind DB file's data section contains bad data: " +
           "invalid size of float."
         )
