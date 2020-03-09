@@ -2,15 +2,15 @@ require "immutable"
 require "./any"
 
 module MaxMindDB
-  struct Cache(K, V)
+  class Cache(K, V)
     property capacity : Int32
     property storage : Immutable::Map(K, V)
 
     def initialize(@capacity : Int32)
-      @storage = Immutable::Map(K, V).new
+      @storage = empty_map
     end
 
-    def fetch(key : K, &block : K -> V) : V
+    def fetch(key : K, & : K -> V) : V
       value = storage[key]?
       return value if value
 
@@ -18,7 +18,7 @@ module MaxMindDB
 
       self.storage =
         if full?
-          Immutable::Map(K, V).new.set(key, value)
+          empty_map.set(key, value)
         else
           storage.set(key, value)
         end
@@ -28,6 +28,10 @@ module MaxMindDB
 
     def full?
       storage.size >= @capacity
+    end
+
+    private def empty_map
+      Immutable::Map(K, V).new
     end
   end
 end
