@@ -32,8 +32,7 @@ module MaxMindDB
     end
 
     def get(address : IPAddress) : Any
-      case {metadata.ip_version, address.family}
-      when {4_i32, Socket::Family::INET6}
+      if metadata.ip_version == 4 && address.family == Socket::Family::INET6
         raise ArgumentError.new(
           "Error looking up '#{address.to_s}'. " +
           "You attempted to look up an IPv6 address in an IPv4-only database."
