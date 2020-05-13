@@ -10,8 +10,8 @@ struct MaxMindDB::Any
       u32: UInt32,
       u64: UInt64,
       u128: UInt128,
-      f: Float32,
-      f64: Float64,
+      f: Float64,
+      f32: Float32,
       s: String
     },
     hash_key_type: String,
