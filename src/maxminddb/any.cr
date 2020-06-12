@@ -15,7 +15,8 @@ struct MaxMindDB::Any
       s: String
     },
     hash_key_type: String,
-    immutable: false
+    immutable: false,
+    target_type: MaxMindDB::Any
   )
 
   def as_i : Int32
