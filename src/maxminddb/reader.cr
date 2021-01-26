@@ -1,4 +1,5 @@
-require "./ip_address"
+require "ipaddress"
+
 require "./buffer"
 require "./decoder"
 require "./metadata"
@@ -27,11 +28,11 @@ class MaxMindDB::Reader
   end
 
   def get(address : String | Int) : Any
-    get IPAddress.new(address)
+    get IPAddress.parse(address)
   end
 
   def get(address : IPAddress) : Any
-    if metadata.ip_version == 4 && address.family == Socket::Family::INET6
+    if metadata.ip_version == 4 && address.ipv6?
       raise ArgumentError.new(
         "Error looking up '#{address.to_s}'. " +
         "You attempted to look up an IPv6 address in an IPv4-only database."
@@ -65,7 +66,7 @@ class MaxMindDB::Reader
   end
 
   private def find_address_in_tree(address : IPAddress) : Int32
-    raise IPAddressError.new unless raw_address = address.to_bytes
+    raise IPAddressError.new unless raw_address = address.data
 
     bit_size = raw_address.size * 8
     node_number = start_node(bit_size)

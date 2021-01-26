@@ -5,6 +5,8 @@ license: MIT
 dependencies:
   immutable:
     github: lucaong/immutable
+  ipaddress:
+    github: sija/ipaddress.cr
 
 authors:
   - delef <delef@ya.ru>
