@@ -64,11 +64,3 @@ result["subdivisions"][0]["names"]["en"].as_s # => "Victoria"
 3. Commit your changes (git commit -am 'Add some feature')
 4. Push to the branch (git push origin my-new-feature)
 5. Create a new Pull Request
-
-## Contributors
-
-|Name|Creator|Maintainer|Contributor|
-|:---:|:---:|:---:|:---:|
-|**[delef](https://github.com/delef)**|√|√||
-|**[jgillich](https://github.com/jgillich)**|||√|
-|**[636f7374](https://github.com/636f7374)**|||√|
