@@ -97,6 +97,14 @@ describe MaxMindDB::Reader do
     end
   end
 
+  it "should raises exception for invalid ip" do
+    ip = "invalid"
+    message = "Unknown IP address: #{ip}"
+    expect_raises MaxMindDB::IPAddressError, message do
+      MaxMindDB::Reader.new(db_path("GeoIP2-Country-Test")).get(ip)
+    end
+  end
+
   describe "various record sizes and ip versions" do
     ips = {
       v4: {

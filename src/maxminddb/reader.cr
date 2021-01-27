@@ -12,10 +12,7 @@ class MaxMindDB::Reader
   getter metadata
 
   def initialize(db_path : String, cache_max_size : Int32? = nil)
-    unless File.exists?(db_path)
-      raise DatabaseError.new("Database not found")
-    end
-
+    raise DatabaseError.new("Database not found") unless File.exists?(db_path)
     initialize(read_file(db_path), cache_max_size)
   end
 
@@ -29,6 +26,8 @@ class MaxMindDB::Reader
 
   def get(address : String | Int) : Any
     get IPAddress.parse(address)
+  rescue e : ArgumentError
+    raise IPAddressError.new(e.message)
   end
 
   def get(address : IPAddress) : Any
