@@ -32,7 +32,7 @@ class MaxMindDB::Reader
 
   def get(address : IPAddress) : Any
     if metadata.ip_version == 4 && address.ipv6?
-      raise ArgumentError.new(
+      raise IPAddressError.new(
         "Error looking up '#{address.to_s}'. " +
         "You attempted to look up an IPv6 address in an IPv4-only database."
       )
