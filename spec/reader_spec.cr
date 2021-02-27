@@ -105,6 +105,71 @@ describe MaxMindDB::Reader do
     end
   end
 
+  describe "get with prefix length (depth)" do
+    ips = [{
+      "ip" => "1.1.1.1",
+      "file_name" => "MaxMind-DB-test-ipv6-32.mmdb",
+      "expected_prefix_length" => 8,
+      "expected_record" => {} of String => MaxMindDB::Any,
+    }, {
+      "ip" => "::1:ffff:ffff",
+      "file_name" => "MaxMind-DB-test-ipv6-24.mmdb",
+      "expected_prefix_length" => 128,
+      "expected_record" => {
+        "ip" => "::1:ffff:ffff"
+      },
+    }, {
+      "ip" => "::2:0:1",
+      "file_name" => "MaxMind-DB-test-ipv6-24.mmdb",
+      "expected_prefix_length" => 122,
+      "expected_record" => {
+        "ip" => "::2:0:0"
+      },
+    }, {
+      "ip" => "1.1.1.1",
+      "file_name" => "MaxMind-DB-test-ipv4-24.mmdb",
+      "expected_prefix_length" => 32,
+      "expected_record" => {
+        "ip" => "1.1.1.1"
+      },
+    }, {
+      "ip" => "1.1.1.3",
+      "file_name" => "MaxMind-DB-test-ipv4-24.mmdb",
+      "expected_prefix_length" => 31,
+      "expected_record" => {
+        "ip" => "1.1.1.2"
+      },
+    }, {
+      "ip" => "200.0.2.1",
+      "file_name" => "MaxMind-DB-no-ipv4-search-tree.mmdb",
+      "expected_prefix_length" => 0,
+      "expected_record" => "::0/64",
+    }, {
+      "ip" => "::200.0.2.1",
+      "file_name" => "MaxMind-DB-no-ipv4-search-tree.mmdb",
+      "expected_prefix_length" => 64,
+      "expected_record" => "::0/64",
+    }, {
+      "ip" => "0:0:0:0:ffff:ffff:ffff:ffff",
+      "file_name" => "MaxMind-DB-no-ipv4-search-tree.mmdb",
+      "expected_prefix_length" => 64,
+      "expected_record" => "::0/64",
+    }, {
+      "ip" => "ef00::",
+      "file_name" => "MaxMind-DB-no-ipv4-search-tree.mmdb",
+      "expected_prefix_length" => 1,
+      "expected_record" => {} of String => MaxMindDB::Any,
+    }]
+
+    ips.each do |ip_data|
+      reader = MaxMindDB::Reader.new(db_path(ip_data["file_name"].as(String)))
+      record, prefix_length = reader.get_with_prefix_length(ip_data["ip"].as(String))
+
+      record.should eq(ip_data["expected_record"])
+      prefix_length.should eq(ip_data["expected_prefix_length"])
+    end
+  end
+
   describe "various record sizes and ip versions" do
     ips = {
       v4: {

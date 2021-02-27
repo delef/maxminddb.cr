@@ -31,6 +31,17 @@ class MaxMindDB::Reader
   end
 
   def get(address : IPAddress) : Any
+    record, _ = get_with_prefix_length(address)
+    record
+  end
+
+  def get_with_prefix_length(address : String | Int) : {Any, Int32}
+    get_with_prefix_length IPAddress.parse(address)
+  rescue e : ArgumentError
+    raise IPAddressError.new(e.message)
+  end
+
+  def get_with_prefix_length(address : IPAddress) : {Any, Int32}
     if metadata.ip_version == 4 && address.ipv6?
       raise IPAddressError.new(
         "Error looking up '#{address.to_s}'. " +
@@ -38,12 +49,12 @@ class MaxMindDB::Reader
       )
     end
 
-    pointer = find_address_in_tree(address)
+    pointer, depth = find_address_in_tree(address)
 
     if pointer > 0
-      resolve_data_pointer(pointer)
+      {resolve_data_pointer(pointer), depth}
     else
-      Any.new({} of String => Any)
+      {Any.new({} of String => Any), depth}
     end
   end
 
@@ -64,11 +75,12 @@ class MaxMindDB::Reader
     bytes
   end
 
-  private def find_address_in_tree(address : IPAddress) : Int32
+  private def find_address_in_tree(address : IPAddress) : {Int32, Int32}
     raise IPAddressError.new unless raw_address = address.data
 
     bit_size = raw_address.size * 8
     node_number = start_node(bit_size)
+    depth = 0
 
     bit_size.times do |i|
       break if node_number >= @metadata.node_count
@@ -77,12 +89,13 @@ class MaxMindDB::Reader
       bit = 1 & (index >> 7 - (i % 8))
 
       node_number = read_node(node_number, bit)
+      depth += 1
     end
 
     if node_number == @metadata.node_count
-      0
+      {0, depth}
     elsif node_number > @metadata.node_count
-      node_number
+      {node_number, depth}
     else
       raise DatabaseError.new("Something bad happened")
     end
