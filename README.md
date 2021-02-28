@@ -49,6 +49,11 @@ result["registered_country"]["names"]["en"].as_s # => "Australia"
 result["subdivisions"][0]["iso_code"].as_s # => "VIC"
 result["subdivisions"][0]["geoname_id"].as_i # => 2145234
 result["subdivisions"][0]["names"]["en"].as_s # => "Victoria"
+
+# This method returns both the record and the network prefix length
+# associated with the record in the database.
+mmdb.get_with_prefix_length(ip) # => {..., 32}
+mmdb.get_with_prefix_length(ip)[1] # => 32
 ```
 
 ## Links
